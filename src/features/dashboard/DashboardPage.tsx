@@ -65,17 +65,30 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="shrink-0 mb-4 mt-4">
-        <FilterBar />
-      </div>
+      {/* Operations Map Section */}
+      <div className="w-full rounded-2xl bg-white p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col gap-6 mt-2 shrink-0">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-brand-900">
+              Interactive Operations Map
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Detailed view of mining leases, active violations, and real-time telemetry
+            </p>
+          </div>
+          <div className="flex-shrink-0">
+            <FilterBar />
+          </div>
+        </div>
 
-      <div className="relative min-h-[420px] shrink-0 overflow-hidden rounded-lg border border-neutral-border">
-        <QuarryMap quarries={filteredQuarries} />
-        <QuarrySidePanel
-          quarry={selectedQuarry}
-          operator={selectedQuarry ? operatorsById.get(selectedQuarry.operatorId) : undefined}
-          license={selectedQuarry ? licensesById.get(selectedQuarry.id) : undefined}
-        />
+        <div className="relative min-h-[600px] w-full shrink-0 overflow-hidden rounded-xl border border-slate-200 shadow-inner">
+          <QuarryMap quarries={filteredQuarries} />
+          <QuarrySidePanel
+            quarry={selectedQuarry}
+            operator={selectedQuarry ? operatorsById.get(selectedQuarry.operatorId) : undefined}
+            license={selectedQuarry ? licensesById.get(selectedQuarry.id) : undefined}
+          />
+        </div>
       </div>
     </div>
   );

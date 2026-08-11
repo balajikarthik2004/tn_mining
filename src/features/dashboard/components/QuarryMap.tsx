@@ -15,7 +15,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin, Layers } from "lucide-react";
 import type { Quarry } from "../../../types/quarry";
 import { STATUS_META, type QuarryStatus } from "../../../types/common";
-import { TN_CENTER } from "../../../data/mock/districts";
+import { TN_CENTER, TN_BOUNDS } from "../../../data/mock/districts";
 import { useDashboardStore } from "../../../store/dashboardStore";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
@@ -154,6 +154,10 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
       <Map
         ref={mapRef}
         initialViewState={{ longitude: TN_CENTER.lng, latitude: TN_CENTER.lat, zoom: 6.4 }}
+        maxBounds={[
+          [TN_BOUNDS.minLng - 1, TN_BOUNDS.minLat - 1], // South West
+          [TN_BOUNDS.maxLng + 1, TN_BOUNDS.maxLat + 1], // North East
+        ] as any}
         style={{ width: "100%", height: "100%" }}
         mapStyle={MAP_STYLE_URL}
         interactiveLayerIds={[CLUSTER_LAYER, UNCLUSTERED_LAYER, "tn-district-fill"]}
