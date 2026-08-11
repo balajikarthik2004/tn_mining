@@ -61,7 +61,7 @@ export function DashboardPage() {
       {/* District Structure Section */}
       <div className="shrink-0">
         <DistrictStructureSection 
-          quarries={quarries} 
+          quarries={filteredQuarries} 
         />
       </div>
 

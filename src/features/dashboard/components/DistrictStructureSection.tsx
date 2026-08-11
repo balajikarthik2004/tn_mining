@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import Map, { Source, Layer, type MapLayerMouseEvent } from "react-map-gl/maplibre";
+import Map, { Source, Layer, Marker, type MapLayerMouseEvent } from "react-map-gl/maplibre";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Download, Eye, MapPinOff } from "lucide-react";
@@ -56,6 +56,7 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [geojsonData, setGeojsonData] = useState<any>(null);
   const [hoveredDistrict, setHoveredDistrict] = useState<{name: string, x: number, y: number} | null>(null);
+  const [selectedQuarryDetails, setSelectedQuarryDetails] = useState<Quarry | null>(null);
 
   useEffect(() => {
     fetch("/geo/tn-districts.geojson?v=3")
@@ -63,6 +64,24 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
       .then((data) => setGeojsonData(data))
       .catch((err) => console.error("Error fetching GeoJSON", err));
   }, []);
+
+  // Auto-select district if filters narrow down to exactly one district,
+  // or clear selection if the selected district is no longer in the filtered results.
+  useEffect(() => {
+    if (quarries.length > 0) {
+      const uniqueDistricts = new Set(quarries.map(q => q.district));
+      if (uniqueDistricts.size === 1) {
+        setSelectedDistrict(Array.from(uniqueDistricts)[0]);
+      } else {
+        setSelectedDistrict(prev => {
+          if (prev && !uniqueDistricts.has(prev as any)) return null;
+          return prev;
+        });
+      }
+    } else {
+      setSelectedDistrict(null);
+    }
+  }, [quarries]);
 
   const allDistricts = useMemo(() => {
     if (!geojsonData) return [];
@@ -131,6 +150,14 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
   }, [geojsonData, selectedDistrict]);
 
   const centerBbox = useMemo(() => getGeoJSONBBox(centerGeojson), [centerGeojson]);
+  
+  const centerBboxCenter = useMemo(() => {
+    if (!centerBbox) return null;
+    return {
+      lng: (centerBbox[0] + centerBbox[2]) / 2,
+      lat: (centerBbox[1] + centerBbox[3]) / 2,
+    };
+  }, [centerBbox]);
 
   const fullBbox = useMemo(() => getGeoJSONBBox(geojsonData), [geojsonData]);
 
@@ -193,7 +220,7 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
                 />
               </Source>
               
-              {/* Custom Map Tooltip */}
+              {/* Custom Map Tooltip for Hover */}
               {hoveredDistrict && (
                 <div 
                   className="absolute z-50 px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-full mt-[-10px]"
@@ -203,20 +230,30 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
                   <div className="absolute w-2 h-2 bg-slate-900 rotate-45 left-1/2 transform -translate-x-1/2 -bottom-1"></div>
                 </div>
               )}
+
+              {/* Persistent Highlight for Selected District */}
+              {selectedDistrict && centerBboxCenter && (
+                <Marker longitude={centerBboxCenter.lng} latitude={centerBboxCenter.lat} anchor="bottom">
+                  <div className="px-3 py-1.5 bg-brand-900 text-white text-xs font-bold rounded shadow-lg pointer-events-none transform -translate-y-2 border border-white/20 whitespace-nowrap">
+                    {selectedDistrict}
+                    <div className="absolute w-2 h-2 bg-brand-900 rotate-45 left-1/2 transform -translate-x-1/2 -bottom-1 border-b border-r border-white/20"></div>
+                  </div>
+                </Marker>
+              )}
             </Map>
           )}
         </div>
 
         {/* CENTER CARD: Selected District Map */}
-        <div className="flex-[3] flex flex-col justify-center items-center">
-          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-slate-50 p-6 flex flex-col items-center justify-center text-center">
-            <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Focus Region</h3>
-            <h4 className="text-brand-900 text-xl font-bold mb-6">
+        <div className="flex-[3] flex flex-col justify-center items-center self-center">
+          <div className="w-full max-w-sm h-[225px] rounded-xl border border-slate-200 bg-slate-50 p-6 flex flex-col items-center justify-center text-center shadow-sm">
+            <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Focus Region</h3>
+            <h4 className="text-brand-900 text-lg font-bold mb-4">
               {selectedDistrict || "Select a District"}
             </h4>
             
             {centerGeojson && centerGeojson.features.length > 0 && centerBbox ? (
-              <div className="w-40 h-40 sm:w-48 sm:h-48 relative drop-shadow-md mx-auto transition-transform duration-300">
+              <div className="w-32 h-32 relative drop-shadow-md mx-auto transition-transform duration-300">
                 <Map
                   key={selectedDistrict} 
                   mapLib={maplibregl}
@@ -251,9 +288,9 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
                 </Map>
               </div>
             ) : (
-              <div className="w-full h-40 flex flex-col items-center justify-center border border-dashed border-slate-300 rounded-xl bg-white mt-4">
-                <MapPinOff className="w-8 h-8 text-slate-300 mb-2" />
-                <span className="text-slate-400 text-xs font-medium">No Data Available</span>
+              <div className="w-full h-24 flex flex-col items-center justify-center border border-dashed border-slate-300 rounded-xl bg-white mt-2">
+                <MapPinOff className="w-6 h-6 text-slate-300 mb-1" />
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">No Data</span>
               </div>
             )}
           </div>
@@ -322,7 +359,11 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0 ml-2">
-                        <button className="p-1.5 text-slate-400 hover:text-brand-900 hover:bg-slate-100 rounded transition-colors" title="View Details">
+                        <button 
+                          className="p-1.5 text-slate-400 hover:text-brand-900 hover:bg-slate-100 rounded transition-colors" 
+                          title="View Details"
+                          onClick={() => setSelectedQuarryDetails(quarry)}
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button className="p-1.5 text-slate-400 hover:text-brand-900 hover:bg-slate-100 rounded transition-colors" title="Download Report">
@@ -345,6 +386,147 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
           </div>
         </div>
       </div>
+
+      {/* Quarry Details Modal */}
+      {selectedQuarryDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between p-5 border-b border-slate-100 bg-slate-50/80">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`w-2 h-2 rounded-full ${
+                    selectedQuarryDetails.status === 'Compliant' ? 'bg-emerald-500' :
+                    selectedQuarryDetails.status === 'Violation' || selectedQuarryDetails.status === 'LicenseExpired' ? 'bg-red-500' : 'bg-amber-500'
+                  }`}></span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {selectedQuarryDetails.status}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-brand-900 leading-tight">{selectedQuarryDetails.name}</h3>
+                <p className="text-[11px] font-medium text-slate-500 mt-1 flex items-center gap-3">
+                  <span><span className="font-semibold text-slate-600">District:</span> {selectedQuarryDetails.district}</span>
+                  <span>&bull;</span>
+                  <span><span className="font-semibold text-slate-600">GPS:</span> {selectedQuarryDetails.lat.toFixed(4)}°N, {selectedQuarryDetails.lng.toFixed(4)}°E</span>
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedQuarryDetails(null)} 
+                className="p-1.5 text-slate-400 hover:text-brand-900 hover:bg-slate-200 rounded-md transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto max-h-[65vh] custom-scrollbar bg-slate-50/30">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                
+                {/* Administrative Info */}
+                <div className="md:col-span-12 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+                   <h4 className="text-[10px] font-bold text-brand-900 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Administrative Profile</h4>
+                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">License ID</div>
+                         <div className="text-xs font-semibold text-slate-800 font-mono">{selectedQuarryDetails.licenseId}</div>
+                      </div>
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Operator ID</div>
+                         <div className="text-xs font-semibold text-slate-800 font-mono">{selectedQuarryDetails.operatorId}</div>
+                      </div>
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Mineral Type</div>
+                         <div className="text-xs font-semibold text-slate-800">{selectedQuarryDetails.mineralType}</div>
+                      </div>
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Lease Area</div>
+                         <div className="text-xs font-semibold text-slate-800">12.4 Hectares <span className="text-[9px] font-normal text-slate-400">(Est.)</span></div>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Volumetric Analysis */}
+                <div className="md:col-span-6 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+                   <h4 className="text-[10px] font-bold text-brand-900 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Volumetric Analysis</h4>
+                   <div className="flex flex-col gap-3">
+                      <div className="flex justify-between items-end">
+                         <div>
+                            <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Declared (m³/month)</div>
+                            <div className="text-sm font-bold text-slate-700">{selectedQuarryDetails.declaredExtractionVolumeM3Monthly.toLocaleString()}</div>
+                         </div>
+                         <div className="text-right">
+                            <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">AI Estimated (m³/month)</div>
+                            <div className="text-sm font-bold text-brand-900">{selectedQuarryDetails.aiEstimatedExtractionVolumeM3Monthly.toLocaleString()}</div>
+                         </div>
+                      </div>
+                      {/* Simple visual bar */}
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
+                         <div className="bg-slate-300 h-full" style={{ width: '50%' }}></div>
+                         <div className="bg-brand-900 h-full opacity-60" style={{ width: `${Math.min(100, (selectedQuarryDetails.aiEstimatedExtractionVolumeM3Monthly / (selectedQuarryDetails.declaredExtractionVolumeM3Monthly || 1)) * 50)}%` }}></div>
+                      </div>
+                   </div>
+                </div>
+                
+                {/* Financial Overview */}
+                <div className="md:col-span-6 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+                   <h4 className="text-[10px] font-bold text-brand-900 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Financial & Royalty</h4>
+                   <div className="grid grid-cols-2 gap-4">
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Royalty Paid</div>
+                         <div className="text-sm font-bold text-emerald-600">₹{selectedQuarryDetails.royaltyPaidINR.toLocaleString()}</div>
+                      </div>
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Outstanding</div>
+                         <div className="text-sm font-bold text-red-600">₹{selectedQuarryDetails.royaltyOutstandingINR.toLocaleString()}</div>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Compliance & Inspection */}
+                <div className="md:col-span-12 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+                   <h4 className="text-[10px] font-bold text-brand-900 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Compliance & Inspections</h4>
+                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Active Violations</div>
+                         <div className={`text-xs font-bold ${selectedQuarryDetails.activeViolationsCount > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                           {selectedQuarryDetails.activeViolationsCount}
+                         </div>
+                      </div>
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Last Inspection</div>
+                         <div className="text-xs font-semibold text-slate-800">{new Date(selectedQuarryDetails.lastInspectionDate).toLocaleDateString()}</div>
+                      </div>
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Inspector</div>
+                         <div className="text-xs font-semibold text-slate-800">{selectedQuarryDetails.inspectorName}</div>
+                      </div>
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Clearances</div>
+                         <div className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                           EC, FC, CTO Valid
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
+              <button className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-md text-[11px] font-bold uppercase tracking-wide hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1.5">
+                <Download className="w-3 h-3" /> Export PDF
+              </button>
+              <button onClick={() => setSelectedQuarryDetails(null)} className="px-3 py-1.5 bg-brand-900 text-white rounded-md text-[11px] font-bold uppercase tracking-wide hover:bg-brand-800 transition-colors shadow-sm">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
