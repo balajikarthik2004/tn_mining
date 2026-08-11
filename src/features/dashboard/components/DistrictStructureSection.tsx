@@ -10,7 +10,7 @@ const minimalMapStyle = {
   name: "Empty",
   metadata: {},
   sources: {},
-  glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
   layers: [
     {
       id: "background",
@@ -58,7 +58,7 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
   const [hoveredDistrict, setHoveredDistrict] = useState<{name: string, x: number, y: number} | null>(null);
 
   useEffect(() => {
-    fetch("/geo/tn-districts.geojson?v=2")
+    fetch("/geo/tn-districts.geojson?v=3")
       .then((res) => res.json())
       .then((data) => setGeojsonData(data))
       .catch((err) => console.error("Error fetching GeoJSON", err));
@@ -224,7 +224,7 @@ export function DistrictStructureSection({ quarries }: DistrictStructureSectionP
                       ["get", "name"], 
                       ""
                     ],
-                    "text-font": ["Open Sans Regular"],
+                    "text-font": ["Noto Sans Regular"],
                     "text-size": ["interpolate", ["linear"], ["zoom"], 4, 8, 8, 12],
                     "text-justify": "center",
                     "text-anchor": "center",

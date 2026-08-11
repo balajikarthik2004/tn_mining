@@ -27,7 +27,7 @@ import { Skeleton } from "../../../components/ui/Skeleton";
  */
 const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
 
-const TN_DISTRICTS_GEOJSON_URL = "/geo/tn-districts.geojson?v=2";
+const TN_DISTRICTS_GEOJSON_URL = "/geo/tn-districts.geojson?v=3";
 
 interface QuarryMapProps {
   quarries: Quarry[];
