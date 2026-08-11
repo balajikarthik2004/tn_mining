@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  /* Government of Tamil Nadu brand palette — maroon + gold (chrome/branding only) */
+  --color-brand-900: #5c0a1e;
+  --color-brand-700: #7a0c2e;
+  --color-brand-50: #fbeaee;
+
+  --color-gold-500: #d4a017;
+  --color-gold-300: #e8c158;
+  --color-gold-50: #fdf6e3;
+
+  --color-neutral-ink: #1f2937;
+  --color-neutral-surface: #ffffff;
+  --color-neutral-border: #e7dfc6;
+
+  /* Status colors — semantic, kept visually distinct from brand maroon */
+  --color-status-compliant: #22c55e;
+  --color-status-warning: #eab308;
+  --color-status-violation: #ef4444;
+  --color-status-expired: #374151;
+
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-gold-50);
+  color: var(--color-neutral-ink);
+}
+
+/* MapLibre GL popup styling (imported here since we don't have a separate global stylesheet entry) */
+.maplibregl-popup-content {
+  padding: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
