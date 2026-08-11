@@ -58,7 +58,14 @@ export function DashboardPage() {
         <StatCards quarries={filteredQuarries} />
       </div>
 
+      {/* District Structure Section */}
       <div className="shrink-0">
+        <DistrictStructureSection 
+          quarries={quarries} 
+        />
+      </div>
+
+      <div className="shrink-0 mb-4 mt-4">
         <FilterBar />
       </div>
 
@@ -68,13 +75,6 @@ export function DashboardPage() {
           quarry={selectedQuarry}
           operator={selectedQuarry ? operatorsById.get(selectedQuarry.operatorId) : undefined}
           license={selectedQuarry ? licensesById.get(selectedQuarry.id) : undefined}
-        />
-      </div>
-
-      {/* New District Structure Section at the bottom */}
-      <div className="mt-8 shrink-0">
-        <DistrictStructureSection 
-          quarries={quarries} 
         />
       </div>
     </div>

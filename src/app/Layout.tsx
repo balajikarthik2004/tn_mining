@@ -47,9 +47,6 @@ export function Layout() {
           <h1 className="text-sm font-semibold text-neutral-ink/70">
             Government of Tamil Nadu <span className="mx-1.5 text-neutral-ink/30">·</span> Department of Geology &amp; Mining
           </h1>
-          <span className="rounded-full bg-gold-50 px-3 py-1 text-xs font-semibold text-brand-900 ring-1 ring-inset ring-gold-300">
-            Prototype
-          </span>
         </header>
         <main className="min-w-0 flex-1 overflow-y-auto bg-gold-50">
           <Outlet />
