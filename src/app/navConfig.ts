@@ -42,5 +42,5 @@ export const NAV_ITEMS: NavItem[] = [
     path: "/royalty-intelligence",
     enabled: true
   },
-  { id: "reports-analytics", label: "Reports & Analytics", path: "/reports-analytics", icon: BarChart3, enabled: false },
+  // { id: "reports-analytics", label: "Reports & Analytics", path: "/reports-analytics", icon: BarChart3, enabled: false },
 ];

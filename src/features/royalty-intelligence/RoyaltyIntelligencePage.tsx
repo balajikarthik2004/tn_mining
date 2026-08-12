@@ -41,11 +41,11 @@ export function RoyaltyIntelligencePage() {
       <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 w-full">
         <RoyaltyDashboard records={royaltyData} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 flex flex-col min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+          <div className="lg:col-span-2 flex flex-col h-full min-h-0">
             <RoyaltyTrendChart records={royaltyData} />
           </div>
-          <div className="lg:col-span-1 flex flex-col min-h-0">
+          <div className="lg:col-span-1 flex flex-col h-full min-h-0">
             <DefaulterList records={royaltyData} />
           </div>
         </div>
