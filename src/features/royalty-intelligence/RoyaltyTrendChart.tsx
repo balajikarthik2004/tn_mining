@@ -76,7 +76,7 @@ export function RoyaltyTrendChart({ records }: { records: RoyaltyRecord[] }) {
               contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
               itemStyle={{ fontSize: '12px', fontWeight: 600 }}
               labelStyle={{ color: '#0f172a', fontWeight: 800, marginBottom: '8px' }}
-              formatter={(value: number) => formatINR(value)}
+              formatter={(value: any) => formatINR(value)}
             />
             <Legend 
               wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 700 }}

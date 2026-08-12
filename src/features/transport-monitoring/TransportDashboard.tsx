@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import type { InternalTrip } from "../../types/transport";
-import { formatINR } from "../../utils/formatters";
 import { Truck, CheckCircle2, AlertTriangle, FileDigit, ScanLine } from "lucide-react";
 
 interface Props {

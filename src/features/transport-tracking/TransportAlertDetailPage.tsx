@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Send, FileText, Activity, MapPin, ShieldAlert, Crosshair, Camera, CheckCircle2, AlertTriangle, Scale } from "lucide-react";
+import { ArrowLeft, Send, Activity, MapPin, ShieldAlert, Crosshair, Camera, CheckCircle2, AlertTriangle, Scale } from "lucide-react";
 import Map, { Source, Layer, Marker, NavigationControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 

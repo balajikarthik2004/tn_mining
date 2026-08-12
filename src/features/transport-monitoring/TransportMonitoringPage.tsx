@@ -1,4 +1,4 @@
-import { Radio, ScanLine } from "lucide-react";
+import { ScanLine } from "lucide-react";
 import { getMockInternalTrips } from "../../data/mock/monitoringData";
 import { TransportDashboard } from "./TransportDashboard";
 import { TripAnomalyList } from "./TripAnomalyList";

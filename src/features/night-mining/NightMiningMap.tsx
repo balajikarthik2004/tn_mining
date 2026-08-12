@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { NightAlert } from "../../types/nightMining";
-import { Moon, Flame, Satellite } from "lucide-react";
+import { Flame, Satellite } from "lucide-react";
 
 // Using Esri Satellite style for high-fidelity professional mapping
 const MAP_STYLE = {

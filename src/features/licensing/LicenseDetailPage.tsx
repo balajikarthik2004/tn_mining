@@ -195,7 +195,7 @@ export function LicenseDetailPage() {
                   interactive={true}
                 >
                   {leaseBoundaryGeojson && (
-                    <Source type="geojson" data={leaseBoundaryGeojson}>
+                    <Source type="geojson" data={leaseBoundaryGeojson as any}>
                       <Layer 
                         id="lease-boundary-fill" 
                         type="fill" 

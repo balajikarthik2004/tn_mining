@@ -255,7 +255,7 @@ export function AnomalyDetailPage() {
                 
                 {mapPolygons && (
                   <>
-                    <Source id="approved-lease" type="geojson" data={mapPolygons.lease}>
+                    <Source id="approved-lease" type="geojson" data={mapPolygons.lease as any}>
                       <Layer
                         id="approved-fill"
                         type="fill"
@@ -268,7 +268,7 @@ export function AnomalyDetailPage() {
                       />
                     </Source>
                     
-                    <Source id="ai-extent" type="geojson" data={mapPolygons.ai}>
+                    <Source id="ai-extent" type="geojson" data={mapPolygons.ai as any}>
                       <Layer
                         id="ai-fill"
                         type="fill"
