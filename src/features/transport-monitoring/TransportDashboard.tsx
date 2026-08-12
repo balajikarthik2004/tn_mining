@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { InternalTrip } from "../../types/transport";
 import { formatINR } from "../../utils/formatters";
-import { Truck, CheckCircle2, AlertTriangle, IndianRupee } from "lucide-react";
+import { Truck, CheckCircle2, AlertTriangle, FileDigit, ScanLine } from "lucide-react";
 
 interface Props {
   trips: InternalTrip[];
@@ -22,52 +22,52 @@ export function TransportDashboard({ trips }: Props) {
       totalTonnes += t.loadingWeightTonnes;
     });
 
-    const revenue = trips.length * 100 + totalTonnes * 50;
+    const checkpostScans = trips.reduce((acc, t) => acc + t.checkpostsPassed, 0);
 
-    return { total: trips.length, completed, inProgress, anomaliesCount, totalTonnes, revenue };
+    return { total: trips.length, completed, inProgress, anomaliesCount, totalTonnes, checkpostScans };
   }, [trips]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-      <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <Truck className="w-4 h-4 text-indigo-400" /> Today's Trips
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <FileDigit className="w-4 h-4 text-brand-500" /> Active e-Passes
         </h3>
-        <p className="text-3xl font-bold text-slate-100 mt-2">{stats.total}</p>
-        <p className="text-sm text-slate-400 mt-1">Total scheduled</p>
+        <p className="text-3xl font-black text-brand-900">{stats.total}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Generated today</p>
       </div>
 
-      <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Completed
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <Truck className="w-4 h-4 text-blue-500" /> In Transit
         </h3>
-        <p className="text-3xl font-bold text-emerald-400 mt-2">{stats.completed}</p>
-        <p className="text-sm text-slate-400 mt-1">Successfully delivered</p>
+        <p className="text-3xl font-black text-blue-600">{stats.inProgress}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Currently on route</p>
       </div>
 
-      <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <Truck className="w-4 h-4 text-blue-400" /> In Progress
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <CheckCircle2 className="w-4 h-4 text-green-500" /> Delivered
         </h3>
-        <p className="text-3xl font-bold text-blue-400 mt-2">{stats.inProgress}</p>
-        <p className="text-sm text-slate-400 mt-1">Currently on route</p>
+        <p className="text-3xl font-black text-green-600">{stats.completed}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Verified unloading</p>
       </div>
 
-      <div className="bg-slate-800/80 backdrop-blur border border-red-500/30 rounded-xl p-5 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-12 h-12 bg-red-500/10 rounded-bl-full -mr-2 -mt-2"></div>
-        <h3 className="text-xs font-medium text-red-400 uppercase tracking-wider flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-red-400" /> Anomalies
+      <div className="bg-red-50 border border-red-200 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-12 h-12 bg-red-100 rounded-bl-full -mr-2 -mt-2 transition-transform group-hover:scale-110"></div>
+        <h3 className="text-xs font-bold text-red-800 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <AlertTriangle className="w-4 h-4 text-red-600" /> Route Deviations
         </h3>
-        <p className="text-3xl font-bold text-red-500 mt-2">{stats.anomaliesCount}</p>
-        <p className="text-sm text-red-400/70 mt-1">Trips flagged</p>
+        <p className="text-3xl font-black text-red-700 relative z-10">{stats.anomaliesCount}</p>
+        <p className="text-xs font-semibold text-red-600/70 mt-1 relative z-10">Suspicious trips flagged</p>
       </div>
 
-      <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <IndianRupee className="w-4 h-4 text-yellow-400" /> Permit Revenue
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <ScanLine className="w-4 h-4 text-indigo-500" /> Checkpost Scans
         </h3>
-        <p className="text-2xl font-bold text-yellow-400 mt-2">{formatINR(stats.revenue)}</p>
-        <p className="text-sm text-slate-400 mt-1">{stats.totalTonnes} tonnes total</p>
+        <p className="text-3xl font-black text-brand-900">{stats.checkpostScans}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Automatic verification</p>
       </div>
     </div>
   );

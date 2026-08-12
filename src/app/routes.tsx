@@ -3,11 +3,10 @@ import { Layout } from "./Layout";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { AnomalyDetectionPage } from "../features/anomaly-detection/AnomalyDetectionPage";
 import { AnomalyDetailPage } from "../features/anomaly-detection/AnomalyDetailPage";
-import { TransportTrackingPage } from "../features/transport-tracking/TransportTrackingPage";
+import { TransportHubPage } from "../features/transport/TransportHubPage";
 import { TransportAlertDetailPage } from "../features/transport-tracking/TransportAlertDetailPage";
 import { LicensingPage } from "../features/licensing/LicensingPage";
 import { LicenseDetailPage } from "../features/licensing/LicenseDetailPage";
-import { TransportMonitoringPage } from "../features/transport-monitoring/TransportMonitoringPage";
 import { TripSheetPage } from "../features/transport-monitoring/TripSheetPage";
 import { PermitQrPage } from "../features/permit-qr/PermitQrPage";
 import { NightMiningPage } from "../features/night-mining/NightMiningPage";
@@ -26,11 +25,10 @@ export const routes: RouteObject[] = [
       { index: true, element: <DashboardPage /> },
       { path: "anomaly-detection", element: <AnomalyDetectionPage /> },
       { path: "anomaly-detection/:id", element: <AnomalyDetailPage /> },
-      { path: "transport-tracking", element: <TransportTrackingPage /> },
+      { path: "transport-hub", element: <TransportHubPage /> },
       { path: "transport-tracking/:id", element: <TransportAlertDetailPage /> },
       { path: "licensing", element: <LicensingPage /> },
       { path: "licensing/:id", element: <LicenseDetailPage /> },
-      { path: "transport-monitoring", element: <TransportMonitoringPage /> },
       { path: "transport-monitoring/:id", element: <TripSheetPage /> },
       { path: "permit-qr", element: <PermitQrPage /> },
       { path: "night-mining", element: <NightMiningPage /> },

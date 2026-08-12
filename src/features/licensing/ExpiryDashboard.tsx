@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { License } from "../../types/license";
 import { formatINR } from "../../utils/formatters";
+import { CheckCircle2, AlertTriangle, FileWarning, ShieldAlert, IndianRupee } from "lucide-react";
 
 interface Props {
   licenses: License[];
@@ -35,27 +36,46 @@ export function ExpiryDashboard({ licenses }: Props) {
   }, [licenses]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-      <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Licenses</h3>
-        <p className="text-3xl font-bold text-slate-100 mt-2">{stats.total}</p>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <CheckCircle2 className="w-4 h-4 text-green-500" /> Active Leases
+        </h3>
+        <p className="text-3xl font-black text-brand-900">{stats.active}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Fully compliant quarries</p>
       </div>
-      <div className="bg-slate-800/80 backdrop-blur border border-orange-500/30 rounded-xl p-5 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-12 h-12 bg-orange-500/10 rounded-bl-full -mr-2 -mt-2"></div>
-        <h3 className="text-xs font-medium text-orange-400 uppercase tracking-wider">Expiring {'<'} 30 Days</h3>
-        <p className="text-3xl font-bold text-orange-500 mt-2">{stats.expiring30}</p>
+
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <FileWarning className="w-4 h-4 text-orange-500" /> Pending Renewals
+        </h3>
+        <p className="text-3xl font-black text-orange-600">{stats.expiring30 + stats.expiring90}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Expiring within 90 days</p>
       </div>
-      <div className="bg-slate-800/80 backdrop-blur border border-yellow-500/30 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-yellow-400 uppercase tracking-wider">Expiring {'<'} 90 Days</h3>
-        <p className="text-3xl font-bold text-yellow-500 mt-2">{stats.expiring90}</p>
+
+      <div className="bg-red-50 border border-red-200 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-12 h-12 bg-red-100 rounded-bl-full -mr-2 -mt-2 transition-transform group-hover:scale-110"></div>
+        <h3 className="text-xs font-bold text-red-800 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <ShieldAlert className="w-4 h-4 text-red-600" /> Suspended Ops
+        </h3>
+        <p className="text-3xl font-black text-red-700 relative z-10">{stats.suspended}</p>
+        <p className="text-xs font-semibold text-red-600/70 mt-1 relative z-10">Licenses seized/halted</p>
       </div>
-      <div className="bg-slate-800/80 backdrop-blur border border-red-500/30 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-red-400 uppercase tracking-wider">Expired / Suspended</h3>
-        <p className="text-3xl font-bold text-red-500 mt-2">{stats.expired + stats.suspended}</p>
+
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <AlertTriangle className="w-4 h-4 text-neutral-ink/40" /> Expired Leases
+        </h3>
+        <p className="text-3xl font-black text-neutral-ink/80">{stats.expired}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Inactive operations</p>
       </div>
-      <div className="bg-slate-800/80 backdrop-blur border border-indigo-500/30 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-indigo-400 uppercase tracking-wider">Est. Revenue at Risk</h3>
-        <p className="text-2xl font-bold text-indigo-400 mt-2">{formatINR(stats.revenueAtRisk)}</p>
+
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <IndianRupee className="w-4 h-4 text-brand-500" /> Revenue Forecast
+        </h3>
+        <p className="text-2xl font-black text-brand-900 mt-1">{formatINR(stats.revenueAtRisk)}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">From pending renewals</p>
       </div>
     </div>
   );

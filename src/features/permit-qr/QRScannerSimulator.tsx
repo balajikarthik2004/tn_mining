@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { QrCode, Camera, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { QrCode, Camera, CheckCircle2, XCircle, RotateCcw, ShieldAlert, ScanLine } from "lucide-react";
 import type { ScanEvent, EPermit } from "../../types/permit";
 
 interface Props {
@@ -64,87 +64,127 @@ export function QRScannerSimulator({ permits, onScanResult }: Props) {
   };
 
   return (
-    <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl overflow-hidden shadow-sm flex flex-col h-[500px]">
-      <div className="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/30 shrink-0">
-        <h3 className="font-bold text-slate-100 flex items-center gap-2">
-          <Camera className="w-4 h-4 text-indigo-400" /> Scanner Simulator
+    <div className="bg-white border border-neutral-border rounded-2xl shadow-sm overflow-hidden flex flex-col h-full relative group">
+      <div className="p-4 border-b border-neutral-border flex justify-between items-center bg-neutral-surface shrink-0">
+        <h3 className="font-bold text-brand-900 flex items-center gap-2">
+          <ScanLine className="w-5 h-5 text-brand-500" /> Mobile Field Scanner
         </h3>
+        <span className="flex h-2 w-2 relative">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+        </span>
       </div>
       
-      <div className="flex-1 p-6 flex flex-col items-center justify-center relative bg-slate-950">
+      {/* Simulate a rugged device screen */}
+      <div className="flex-1 p-4 sm:p-6 flex flex-col items-center justify-center relative bg-slate-950 overflow-hidden">
+        {/* Subtle grid pattern background for the "camera" */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
         {!isScanning && !result && (
-          <div className="text-center space-y-6">
-            <div className="relative w-48 h-48 mx-auto border-2 border-slate-600 rounded-xl flex items-center justify-center bg-slate-900">
-              <QrCode className="w-16 h-16 text-slate-500 opacity-50" />
-              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-indigo-500 rounded-tl-xl" />
-              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-indigo-500 rounded-tr-xl" />
-              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-indigo-500 rounded-bl-xl" />
-              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-indigo-500 rounded-br-xl" />
+          <div className="text-center space-y-8 z-10">
+            <div className="relative w-56 h-56 mx-auto flex items-center justify-center">
+              <QrCode className="w-20 h-20 text-white/30" />
+              {/* Corner brackets */}
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white/50 rounded-tl-xl" />
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white/50 rounded-tr-xl" />
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white/50 rounded-bl-xl" />
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white/50 rounded-br-xl" />
             </div>
             <button 
               onClick={simulateScan}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold shadow-lg shadow-indigo-900/20 transition-all flex items-center gap-2 mx-auto"
+              className="px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 mx-auto uppercase tracking-widest text-sm"
             >
-              <Camera className="w-5 h-5" /> Tap to Scan Next Vehicle
+              <Camera className="w-5 h-5" /> Tap to Scan
             </button>
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest">Awaiting target permit</p>
           </div>
         )}
 
         {isScanning && (
-          <div className="text-center space-y-6 animate-pulse">
-            <div className="relative w-48 h-48 mx-auto border-2 border-indigo-500 rounded-xl flex items-center justify-center bg-slate-900 overflow-hidden">
-              <QrCode className="w-16 h-16 text-indigo-500" />
-              <div className="absolute top-0 left-0 w-full h-1 bg-indigo-400 shadow-[0_0_15px_rgba(99,102,241,1)] animate-[scan_1.5s_ease-in-out_infinite]" />
+          <div className="text-center space-y-8 z-10">
+            <div className="relative w-56 h-56 mx-auto flex items-center justify-center overflow-hidden">
+              <QrCode className="w-20 h-20 text-blue-400 opacity-80" />
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-xl" />
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-xl" />
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-xl" />
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-xl" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-blue-400 shadow-[0_0_20px_rgba(59,130,246,1)] animate-[scan_1.5s_ease-in-out_infinite]" />
             </div>
-            <p className="text-indigo-400 font-bold">Verifying with central database...</p>
+            <p className="text-blue-400 font-bold uppercase tracking-widest text-sm animate-pulse">Decrypting e-Pass...</p>
           </div>
         )}
 
         {result && (
-          <div className="w-full h-full flex flex-col items-center justify-center animate-in zoom-in duration-300">
+          <div className="w-full h-full flex flex-col items-center justify-center animate-in zoom-in duration-300 z-10">
             {result.result === "Valid" ? (
-              <div className="w-full max-w-sm bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-6 text-center space-y-4 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-                <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <CheckCircle2 className="w-10 h-10" />
+              <div className="w-full max-w-sm bg-green-950/80 backdrop-blur border border-green-500/50 rounded-2xl p-6 text-center shadow-[0_0_40px_rgba(34,197,94,0.15)] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
+                <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30">
+                  <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-bold text-emerald-400 uppercase tracking-widest">Valid Permit</h2>
-                <div className="bg-slate-900/50 rounded-lg p-4 text-left border border-slate-700/50 space-y-2">
-                  <p className="text-sm text-slate-400 flex justify-between">ID: <span className="text-slate-100 font-medium">{result.permitId}</span></p>
-                  <p className="text-sm text-slate-400 flex justify-between">Operator: <span className="text-slate-100 font-medium">{scannedPermit?.operatorName}</span></p>
-                  <p className="text-sm text-slate-400 flex justify-between">Material: <span className="text-slate-100 font-medium">{scannedPermit?.mineralType}</span></p>
-                  <div className="pt-2 mt-2 border-t border-slate-700/50">
-                    <p className="text-xs text-slate-500 mb-1">Quantity Remaining</p>
-                    <div className="w-full bg-slate-800 rounded-full h-2 mb-1">
-                      <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${((scannedPermit?.authorizedQuantityTonnes || 1) - (scannedPermit?.utilizedQuantityTonnes || 0)) / (scannedPermit?.authorizedQuantityTonnes || 1) * 100}%` }}></div>
+                <h2 className="text-2xl font-black text-green-400 uppercase tracking-widest mb-6">Verified</h2>
+                <div className="bg-black/40 rounded-xl p-4 text-left space-y-3">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                    <span className="text-xs font-bold text-white/50 uppercase tracking-widest">e-Pass ID</span>
+                    <span className="text-sm font-mono font-bold text-white">{result.permitId}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                    <span className="text-xs font-bold text-white/50 uppercase tracking-widest">Operator</span>
+                    <span className="text-sm font-bold text-white truncate max-w-[150px]">{scannedPermit?.operatorName}</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-2">
+                    <span className="text-xs font-bold text-white/50 uppercase tracking-widest">Cargo</span>
+                    <span className="text-sm font-bold text-white">{scannedPermit?.mineralType}</span>
+                  </div>
+                  <div className="pt-2 mt-2 border-t border-white/10">
+                    <div className="flex justify-between items-end mb-1">
+                      <span className="text-xs font-bold text-white/50 uppercase tracking-widest">Quota</span>
+                      <span className="text-xs font-black text-green-400">
+                        {(scannedPermit?.authorizedQuantityTonnes || 0) - (scannedPermit?.utilizedQuantityTonnes || 0)}t remaining
+                      </span>
                     </div>
-                    <p className="text-xs text-emerald-400 text-right font-medium">
-                      {(scannedPermit?.authorizedQuantityTonnes || 0) - (scannedPermit?.utilizedQuantityTonnes || 0)}t / {scannedPermit?.authorizedQuantityTonnes}t
-                    </p>
+                    <div className="w-full bg-black rounded-full h-1.5">
+                      <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${((scannedPermit?.authorizedQuantityTonnes || 1) - (scannedPermit?.utilizedQuantityTonnes || 0)) / (scannedPermit?.authorizedQuantityTonnes || 1) * 100}%` }}></div>
+                    </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="w-full max-w-sm bg-red-950/30 border border-red-500/30 rounded-xl p-6 text-center space-y-4 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
-                <div className="w-16 h-16 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <XCircle className="w-10 h-10" />
+              <div className="w-full max-w-sm bg-red-950/80 backdrop-blur border border-red-500/50 rounded-2xl p-6 text-center shadow-[0_0_40px_rgba(239,68,68,0.2)] relative overflow-hidden animate-[shake_0.5s_ease-in-out]">
+                <div className="absolute top-0 left-0 w-full h-2 bg-red-500"></div>
+                <div className="w-16 h-16 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/30">
+                  <XCircle className="w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-bold text-red-500 uppercase tracking-widest">Invalid Permit</h2>
-                <div className="bg-slate-900/50 rounded-lg p-4 text-left border border-red-500/20 space-y-2">
-                  <p className="text-sm text-red-400 font-bold flex justify-between">Reason: <span>{result.invalidReason}</span></p>
-                  <p className="text-sm text-slate-400 flex justify-between mt-2">ID Scanned: <span className="text-slate-100 font-medium">{result.permitId}</span></p>
+                <h2 className="text-3xl font-black text-red-500 uppercase tracking-widest mb-1">Seize</h2>
+                <h3 className="text-sm font-bold text-red-400/80 uppercase tracking-widest mb-6">Invalid Permit</h3>
+                
+                <div className="bg-black/40 rounded-xl p-4 text-left space-y-3 border border-red-500/20">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                    <span className="text-xs font-bold text-white/50 uppercase tracking-widest">Reason</span>
+                    <span className="text-sm font-black text-red-400 uppercase">{result.invalidReason}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                    <span className="text-xs font-bold text-white/50 uppercase tracking-widest">Scanned ID</span>
+                    <span className="text-sm font-mono font-bold text-white opacity-50 line-through">{result.permitId}</span>
+                  </div>
                   
                   {result.invalidReason === "Quantity Exceeded" && scannedPermit && (
-                    <div className="pt-2 mt-2 border-t border-slate-700/50">
-                      <p className="text-xs text-slate-500 mb-1">Quota Status</p>
-                      <div className="w-full bg-red-900 rounded-full h-2 mb-1">
-                        <div className="bg-red-500 h-2 rounded-full w-full"></div>
+                    <div className="pt-2 mt-2">
+                      <div className="flex justify-between items-end mb-1">
+                        <span className="text-xs font-bold text-white/50 uppercase tracking-widest">Quota Status</span>
+                        <span className="text-xs font-black text-red-400">0t remaining</span>
                       </div>
-                      <p className="text-xs text-red-400 text-right font-medium">0t remaining</p>
+                      <div className="w-full bg-red-950 rounded-full h-1.5">
+                        <div className="bg-red-500 h-1.5 rounded-full w-full"></div>
+                      </div>
                     </div>
                   )}
                   {result.invalidReason === "Forged" && (
-                    <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-300">
-                      Alert has been dispatched to district task force. Retain vehicle and driver.
+                    <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg flex items-start gap-2">
+                      <ShieldAlert className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                      <span className="text-xs font-bold text-red-300 uppercase tracking-wider leading-relaxed">
+                        Automatic alert sent to control room. Retain vehicle and driver.
+                      </span>
                     </div>
                   )}
                 </div>
@@ -153,9 +193,9 @@ export function QRScannerSimulator({ permits, onScanResult }: Props) {
             
             <button 
               onClick={() => setResult(null)}
-              className="mt-6 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors flex items-center gap-2"
+              className="mt-8 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl font-bold transition-colors flex items-center gap-2 uppercase tracking-widest text-sm"
             >
-              <RotateCcw className="w-4 h-4" /> Scan Next
+              <RotateCcw className="w-4 h-4" /> Reset Scanner
             </button>
           </div>
         )}
@@ -165,6 +205,11 @@ export function QRScannerSimulator({ permits, onScanResult }: Props) {
         @keyframes scan {
           0%, 100% { top: 0; }
           50% { top: calc(100% - 4px); }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+          20%, 40%, 60%, 80% { transform: translateX(5px); }
         }
       `}</style>
     </div>

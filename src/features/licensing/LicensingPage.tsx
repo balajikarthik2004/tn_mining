@@ -7,19 +7,26 @@ export function LicensingPage() {
   const { licenses, quarries, operators } = getMockData();
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-          <FileText className="w-6 h-6 text-indigo-400" />
-          Mining & Quarry Licensing
-        </h1>
-        <p className="text-slate-400 mt-2">
-          Manage quarry licenses, monitor expiry dates, and process renewal applications.
-        </p>
+    <div className="flex flex-col h-full overflow-y-auto p-4 md:p-6 gap-6 bg-gold-50">
+      <div className="shrink-0 flex items-center justify-between border-b border-neutral-border pb-4">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-brand-900 flex items-center gap-2">
+            <FileText className="w-6 h-6 text-brand-500" />
+            Mining & Quarry Licensing
+          </h1>
+          <p className="text-sm font-medium text-neutral-ink/60 mt-1">
+            Manage active quarry leases, monitor upcoming expiries, and process renewal applications.
+          </p>
+        </div>
       </div>
 
-      <ExpiryDashboard licenses={licenses} />
-      <LicenseRegistry licenses={licenses} quarries={quarries} operators={operators} />
+      <div className="shrink-0">
+        <ExpiryDashboard licenses={licenses} />
+      </div>
+      
+      <div className="flex-1 bg-white border border-neutral-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+        <LicenseRegistry licenses={licenses} quarries={quarries} operators={operators} />
+      </div>
     </div>
   );
 }

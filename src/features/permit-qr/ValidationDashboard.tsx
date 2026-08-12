@@ -26,38 +26,38 @@ export function ValidationDashboard({ scans }: Props) {
   }, [scans]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <QrCode className="w-4 h-4 text-indigo-400" /> Total Scans Today
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <QrCode className="w-4 h-4 text-brand-500" /> Field Scans Today
         </h3>
-        <p className="text-3xl font-bold text-slate-100 mt-2">{stats.total}</p>
-        <p className="text-sm text-slate-400 mt-1">Across all checkposts</p>
+        <p className="text-3xl font-black text-brand-900">{stats.total}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Across all checkposts</p>
       </div>
 
-      <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Valid Permits
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <CheckCircle2 className="w-4 h-4 text-green-500" /> Valid e-Passes
         </h3>
-        <p className="text-3xl font-bold text-emerald-500 mt-2">{stats.valid}</p>
-        <p className="text-sm text-emerald-400/70 mt-1">Cleared for transport</p>
+        <p className="text-3xl font-black text-green-600">{stats.valid}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Cleared for transport</p>
       </div>
 
-      <div className="bg-slate-800/80 backdrop-blur border border-red-500/30 rounded-xl p-5 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-12 h-12 bg-red-500/10 rounded-bl-full -mr-2 -mt-2"></div>
-        <h3 className="text-xs font-medium text-red-400 uppercase tracking-wider flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 text-red-400" /> Fake / Forged Flags
+      <div className="bg-red-50 border border-red-200 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-12 h-12 bg-red-100 rounded-bl-full -mr-2 -mt-2 transition-transform group-hover:scale-110"></div>
+        <h3 className="text-xs font-bold text-red-800 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <ShieldAlert className="w-4 h-4 text-red-600" /> Forged Permits Seized
         </h3>
-        <p className="text-3xl font-bold text-red-500 mt-2">{stats.forged}</p>
-        <p className="text-sm text-red-400/70 mt-1">Immediate alerts triggered</p>
+        <p className="text-3xl font-black text-red-700 relative z-10">{stats.forged}</p>
+        <p className="text-xs font-semibold text-red-600/70 mt-1 relative z-10">Immediate alerts triggered</p>
       </div>
 
-      <div className="bg-slate-800/80 backdrop-blur border border-orange-500/30 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-medium text-orange-400 uppercase tracking-wider flex items-center gap-2">
-          <AlertOctagon className="w-4 h-4 text-orange-400" /> Quota Exceeded
+      <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+          <AlertOctagon className="w-4 h-4 text-orange-500" /> Volume Quota Exceeded
         </h3>
-        <p className="text-3xl font-bold text-orange-500 mt-2">{stats.quotaExceeded}</p>
-        <p className="text-sm text-orange-400/70 mt-1">Permit auto-expired</p>
+        <p className="text-3xl font-black text-orange-600">{stats.quotaExceeded}</p>
+        <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Permits auto-expired</p>
       </div>
     </div>
   );

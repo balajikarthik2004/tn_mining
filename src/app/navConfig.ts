@@ -24,9 +24,8 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Quarry Map Dashboard", path: "/", icon: Map, enabled: true },
   { id: "anomaly-detection", label: "AI Anomaly Detection", path: "/anomaly-detection", icon: AlertTriangle, enabled: true },
-  { id: "transport-tracking", label: "Inter-State Transport Tracking", path: "/transport-tracking", icon: Truck, enabled: true },
   { id: "licensing", label: "Licensing", path: "/licensing", icon: FileText, enabled: true },
-  { id: "transport-monitoring", label: "Transport Monitoring", path: "/transport-monitoring", icon: Radio, enabled: true },
+  { id: "transport-hub", label: "Transport Command Center", path: "/transport-hub", icon: Truck, enabled: true },
   { id: "permit-qr", label: "QR Permit Validation", path: "/permit-qr", icon: QrCode, enabled: true },
   { id: "night-mining", label: "Night Mining Detection", path: "/night-mining", icon: Moon, enabled: true },
   {
