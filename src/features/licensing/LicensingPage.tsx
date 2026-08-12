@@ -24,7 +24,7 @@ export function LicensingPage() {
         <ExpiryDashboard licenses={licenses} />
       </div>
       
-      <div className="flex-1 bg-white border border-neutral-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      <div className="shrink-0 h-[500px] bg-white border border-neutral-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <LicenseRegistry licenses={licenses} quarries={quarries} operators={operators} />
       </div>
     </div>

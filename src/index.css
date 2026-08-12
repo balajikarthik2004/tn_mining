@@ -20,7 +20,8 @@
   --color-status-violation: #ef4444; /* Red 500 */
   --color-status-expired: #64748b;   /* Slate 500 */
 
-  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-sans: "Roboto", system-ui, -apple-system, sans-serif;
+  --font-heading: "Montserrat", system-ui, -apple-system, sans-serif;
 }
 
 html,
@@ -32,6 +33,11 @@ body,
 body {
   background-color: var(--color-brand-50);
   color: var(--color-neutral-ink);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-heading);
 }
 
 /* MapLibre GL popup styling (imported here since we don't have a separate global stylesheet entry) */
