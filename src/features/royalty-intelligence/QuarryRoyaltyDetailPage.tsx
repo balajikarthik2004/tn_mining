@@ -16,138 +16,157 @@ export function QuarryRoyaltyDetailPage() {
 
   const latestRecord = records[0];
 
-  if (!latestRecord) return <div className="p-8 text-slate-400">Loading quarry data...</div>;
+  if (!latestRecord) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-900"></div>
+      </div>
+    );
+  }
 
   const totalGap = records.reduce((acc, r) => acc + (r.expectedRoyalty - r.paidRoyalty > 0 ? r.expectedRoyalty - r.paidRoyalty : 0), 0);
   const totalReminders = records.reduce((acc, r) => acc + r.remindersSent, 0);
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link to="/royalty-intelligence" className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 transition-colors">
+    <div className="flex flex-col h-full bg-gold-50 overflow-hidden">
+      {/* Header */}
+      <div className="shrink-0 bg-white border-b border-neutral-border px-4 py-3 sm:px-6 sm:py-4 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between gap-4 z-10 relative">
+        <div className="flex items-start gap-4">
+          <Link to="/royalty-intelligence" className="mt-1 flex items-center justify-center w-10 h-10 rounded-full bg-white border border-neutral-border hover:bg-neutral-50 text-neutral-ink/70 transition-colors shadow-sm shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-              {latestRecord.quarryName}
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-black text-brand-900 tracking-tight">
+                Financial Audit Dossier: {latestRecord.quarryName}
+              </h1>
               {totalGap > 0 ? (
-                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
+                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 shadow-sm">
                    <AlertTriangle className="w-3.5 h-3.5" /> Defaulter
                  </span>
               ) : (
-                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-green-50 text-green-700 border border-green-200 shadow-sm">
                    Compliant
                  </span>
               )}
-            </h1>
-            <p className="text-slate-400 text-sm mt-1">
+            </div>
+            <p className="text-neutral-ink/60 text-sm mt-1.5 font-bold uppercase tracking-wide">
               {latestRecord.operatorName} • {latestRecord.district} • {latestRecord.mineralType}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium text-sm border border-slate-700/50">
-            <BellRing className="w-4 h-4" /> Send Legal Notice
+        <div className="flex gap-2 shrink-0">
+          <button className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-neutral-50 text-brand-900 border border-neutral-border rounded-lg transition-colors font-bold text-sm shadow-sm">
+            <BellRing className="w-4 h-4" /> Send Notice
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors font-medium text-sm">
+          <button className="flex items-center gap-2 px-4 py-2 bg-brand-900 hover:bg-brand-800 text-white rounded-lg transition-colors font-bold text-sm shadow-sm">
             <FileText className="w-4 h-4" /> Export Report
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-          <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-6 shadow-sm">
-             <h3 className="text-lg font-bold text-slate-200 mb-4 border-b border-slate-700/50 pb-3 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-indigo-400" /> 3-Way Gap Analysis (Last 12 Months)
-            </h3>
-            
-            <div className="space-y-4">
-              {records.map(r => {
-                return (
-                  <div key={r.month} className="p-4 bg-slate-900/50 rounded-lg border border-slate-700/50">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="font-bold text-slate-200">{new Date(r.month + "-01").toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                         r.status === "Paid" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                         r.status === "Overdue" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                         "bg-orange-500/10 text-orange-400 border-orange-500/20"
-                      }`}>{r.status}</span>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-xs text-slate-400 mb-1">
-                          <span>AI Estimated ({r.aiEstimatedExtractionTonnes.toLocaleString()}t)</span>
-                          <span>{formatINR(r.expectedRoyalty)}</span>
-                        </div>
-                        <div className="w-full bg-slate-800 rounded-full h-1.5">
-                          <div className="bg-indigo-400 h-1.5 rounded-full w-full"></div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-xs text-slate-400 mb-1">
-                          <span>Operator Declared ({r.declaredExtractionTonnes.toLocaleString()}t)</span>
-                          <span>{formatINR(r.declaredRoyalty)}</span>
-                        </div>
-                        <div className="w-full bg-slate-800 rounded-full h-1.5">
-                          <div className="bg-slate-400 h-1.5 rounded-full" style={{ width: `${(r.declaredExtractionTonnes / r.aiEstimatedExtractionTonnes) * 100}%` }}></div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-xs font-bold mb-1">
-                          <span className={r.paidRoyalty >= r.expectedRoyalty ? "text-emerald-400" : "text-orange-400"}>Actually Paid</span>
-                          <span className={r.paidRoyalty >= r.expectedRoyalty ? "text-emerald-400" : "text-orange-400"}>{formatINR(r.paidRoyalty)}</span>
-                        </div>
-                        <div className="w-full bg-slate-800 rounded-full h-1.5">
-                          <div className={`h-1.5 rounded-full ${r.paidRoyalty >= r.expectedRoyalty ? "bg-emerald-500" : "bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]"}`} style={{ width: `${Math.min((r.paidRoyalty / r.expectedRoyalty) * 100, 100)}%` }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-200 mb-4 border-b border-slate-700/50 pb-3 flex items-center gap-2">
-              <TrendingDown className="w-5 h-5 text-orange-400" /> Outstanding Summary
-            </h3>
-            <div className="text-center p-6 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-              <p className="text-slate-400 text-sm mb-1">Total Outstanding</p>
-              <p className="text-4xl font-bold text-orange-500">{formatINR(totalGap)}</p>
-              {totalGap > 0 && <p className="text-xs text-orange-400 mt-2">Triggered {totalReminders} automated reminders.</p>}
-            </div>
-          </div>
-          
-          <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-6 shadow-sm">
-             <h3 className="text-lg font-bold text-slate-200 mb-4 border-b border-slate-700/50 pb-3 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-emerald-400" /> Payment History
-            </h3>
-            {records.some(r => r.payments.length > 0) ? (
-              <div className="space-y-3">
-                {records.flatMap(r => r.payments).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(p => (
-                  <div key={p.id} className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/50">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-bold text-emerald-400">{formatINR(p.amount)}</span>
-                      <span className="text-xs text-slate-500">{formatDate(p.date)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] text-slate-400">
-                      <span>{p.id}</span>
-                      <span>{p.method}</span>
-                    </div>
-                  </div>
-                ))}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-6">
+            <div className="bg-white border border-neutral-border rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-neutral-surface px-6 py-4 border-b border-neutral-border flex items-center gap-2">
+                 <Zap className="w-5 h-5 text-brand-500" />
+                 <h3 className="font-bold text-brand-900">AI 3-Way Gap Analysis (Last 12 Months)</h3>
               </div>
-            ) : (
-               <p className="text-sm text-slate-500">No payments recorded.</p>
-            )}
+              
+              <div className="p-6 space-y-6">
+                {records.map(r => {
+                  return (
+                    <div key={r.month} className="p-5 bg-white border border-neutral-border rounded-xl shadow-sm">
+                      <div className="flex justify-between items-center mb-6 pb-4 border-b border-neutral-border border-dashed">
+                        <span className="font-black text-brand-900 uppercase tracking-widest">{new Date(r.month + "-01").toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+                        <span className={`px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest border shadow-sm ${
+                           r.status === "Paid" ? "bg-green-50 text-green-700 border-green-200" :
+                           r.status === "Overdue" ? "bg-red-50 text-red-700 border-red-200" :
+                           "bg-orange-50 text-orange-700 border-orange-200"
+                        }`}>{r.status}</span>
+                      </div>
+                      
+                      <div className="space-y-6">
+                        <div>
+                          <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-neutral-ink/50 mb-2">
+                            <span>AI Estimated Extraction ({r.aiEstimatedExtractionTonnes.toLocaleString()}t)</span>
+                            <span className="text-brand-900">{formatINR(r.expectedRoyalty)}</span>
+                          </div>
+                          <div className="w-full bg-neutral-surface rounded-full h-2 border border-neutral-border">
+                            <div className="bg-brand-500 h-2 rounded-full w-full"></div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-neutral-ink/50 mb-2">
+                            <span>Operator Declared ({r.declaredExtractionTonnes.toLocaleString()}t)</span>
+                            <span className="text-brand-900">{formatINR(r.declaredRoyalty)}</span>
+                          </div>
+                          <div className="w-full bg-neutral-surface rounded-full h-2 border border-neutral-border">
+                            <div className="bg-neutral-ink/30 h-2 rounded-full" style={{ width: `${(r.declaredExtractionTonnes / r.aiEstimatedExtractionTonnes) * 100}%` }}></div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between text-[11px] font-black uppercase tracking-widest mb-2">
+                            <span className={r.paidRoyalty >= r.expectedRoyalty ? "text-green-700" : "text-orange-600"}>Actually Paid</span>
+                            <span className={r.paidRoyalty >= r.expectedRoyalty ? "text-green-700" : "text-orange-600"}>{formatINR(r.paidRoyalty)}</span>
+                          </div>
+                          <div className="w-full bg-neutral-surface rounded-full h-2 border border-neutral-border">
+                            <div className={`h-2 rounded-full ${r.paidRoyalty >= r.expectedRoyalty ? "bg-green-500" : "bg-orange-500"}`} style={{ width: `${Math.min((r.paidRoyalty / r.expectedRoyalty) * 100, 100)}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-white border border-neutral-border rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-neutral-surface px-6 py-4 border-b border-neutral-border flex items-center gap-2">
+                <TrendingDown className="w-5 h-5 text-red-500" />
+                <h3 className="font-bold text-brand-900">Outstanding Summary</h3>
+              </div>
+              <div className="p-6">
+                <div className="text-center p-6 bg-red-50 border border-red-200 rounded-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-red-100 rounded-full -translate-y-12 translate-x-12 opacity-50"></div>
+                  <p className="text-red-700/80 text-[10px] font-bold uppercase tracking-widest mb-2 relative z-10">Total Outstanding Gap</p>
+                  <p className="text-4xl font-black text-red-700 relative z-10">{formatINR(totalGap)}</p>
+                  {totalGap > 0 && <p className="text-[10px] font-bold uppercase tracking-widest text-red-700/60 mt-3 relative z-10">Triggered {totalReminders} automated reminders</p>}
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white border border-neutral-border rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-neutral-surface px-6 py-4 border-b border-neutral-border flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-brand-500" />
+                <h3 className="font-bold text-brand-900">Payment History</h3>
+              </div>
+              <div className="p-6">
+                {records.some(r => r.payments.length > 0) ? (
+                  <div className="space-y-4">
+                    {records.flatMap(r => r.payments).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(p => (
+                      <div key={p.id} className="p-4 bg-white border border-neutral-border rounded-xl shadow-sm">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-lg font-black text-brand-900">{formatINR(p.amount)}</span>
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-ink/40">{formatDate(p.date)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-neutral-ink/60">
+                          <span>Ref: {p.id}</span>
+                          <span className="bg-neutral-surface px-2 py-0.5 rounded border border-neutral-border">{p.method}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                   <p className="text-sm font-bold text-neutral-ink/40 text-center py-4">No payments recorded.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

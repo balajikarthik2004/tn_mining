@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { CourtCase } from "../../types/courtCases";
 import { formatDate, formatINR } from "../../utils/formatters";
-import { Search, Filter, ChevronRight } from "lucide-react";
+import { Search, Filter, ChevronRight, Scale } from "lucide-react";
 
 interface Props {
   cases: CourtCase[];
@@ -17,75 +17,85 @@ export function CaseRegistry({ cases }: Props) {
   );
 
   return (
-    <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl overflow-hidden shadow-sm flex flex-col h-[600px]">
-      <div className="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/30">
-        <h3 className="font-bold text-slate-100 flex items-center gap-2">
-          Case Registry
+    <div className="bg-white border border-neutral-border rounded-2xl overflow-hidden shadow-sm flex flex-col h-full">
+      <div className="p-4 sm:px-6 py-4 border-b border-neutral-border flex flex-wrap gap-4 justify-between items-center bg-neutral-surface shrink-0">
+        <h3 className="font-bold text-brand-900 flex items-center gap-2 text-sm">
+          <Scale className="w-4 h-4 text-brand-500" />
+          Active Legal Registry
         </h3>
         <div className="flex gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-ink/40" />
             <input
               type="text"
-              placeholder="Search ID or Quarry..."
+              placeholder="Search Case ID or Quarry..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="bg-slate-900/50 border border-slate-700/50 rounded-lg pl-9 pr-4 py-1.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-64"
+              className="bg-white border border-neutral-border rounded-lg pl-9 pr-4 py-2 text-sm text-brand-900 placeholder-neutral-ink/40 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 w-full sm:w-64 transition-all"
             />
           </div>
-          <button className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/50 text-slate-400 hover:text-white transition-colors">
+          <button className="px-3 py-2 rounded-lg border border-neutral-border bg-white text-brand-900 hover:bg-neutral-50 transition-colors flex items-center justify-center shadow-sm">
             <Filter className="w-4 h-4" />
           </button>
         </div>
       </div>
       
-      <div className="flex-1 overflow-auto custom-scrollbar">
-        <table className="w-full text-left text-sm text-slate-300 min-w-[800px]">
-          <thead className="text-xs uppercase bg-slate-900/50 text-slate-400 sticky top-0 z-10 shadow-sm backdrop-blur">
+      <div className="flex-1 overflow-auto custom-scrollbar bg-white">
+        <table className="w-full text-left text-sm min-w-[800px]">
+          <thead className="text-[10px] uppercase bg-neutral-surface text-neutral-ink/50 sticky top-0 z-10 font-black tracking-widest border-b border-neutral-border shadow-sm">
             <tr>
-              <th className="px-4 py-3 font-medium">Case ID</th>
-              <th className="px-4 py-3 font-medium">Quarry</th>
-              <th className="px-4 py-3 font-medium">Violation</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium text-right">Penalty</th>
-              <th className="px-4 py-3"></th>
+              <th className="px-6 py-4">Case Details</th>
+              <th className="px-6 py-4">Entity / Quarry</th>
+              <th className="px-6 py-4">Infraction</th>
+              <th className="px-6 py-4">Current Status</th>
+              <th className="px-6 py-4 text-right">Penalty Assessed</th>
+              <th className="px-6 py-4"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-700/50">
+          <tbody className="divide-y divide-neutral-border">
             {filteredCases.slice(0, 50).map(c => (
-              <tr key={c.id} className="hover:bg-slate-750/30 transition-colors">
-                <td className="px-4 py-3">
-                  <span className="font-medium text-slate-200">{c.id}</span>
-                  <span className="block text-xs text-slate-500">{formatDate(c.violationDate)}</span>
+              <tr key={c.id} className="hover:bg-neutral-50 transition-colors group cursor-pointer">
+                <td className="px-6 py-4">
+                  <span className="font-bold text-brand-900 block">{c.id}</span>
+                  <span className="block text-[10px] font-bold text-neutral-ink/50 uppercase tracking-widest mt-0.5">{formatDate(c.violationDate)}</span>
                 </td>
-                <td className="px-4 py-3">
-                  <span className="text-slate-200 block truncate max-w-[150px]">{c.quarryName}</span>
-                  <span className="text-xs text-slate-500">{c.district}</span>
+                <td className="px-6 py-4">
+                  <span className="text-brand-900 font-bold block truncate max-w-[200px]">{c.quarryName}</span>
+                  <span className="text-[10px] font-bold text-neutral-ink/50 uppercase tracking-widest mt-0.5">{c.district}</span>
                 </td>
-                <td className="px-4 py-3 text-slate-400">{c.violationType}</td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                    c.status === "Collected" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                    c.status === "Written Off" ? "bg-slate-500/10 text-slate-400 border-slate-500/20" :
-                    c.status === "Violation Detected" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                    "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                <td className="px-6 py-4 text-brand-900 text-xs font-bold">{c.violationType}</td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex items-center px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border shadow-sm ${
+                    c.status === "Collected" ? "bg-green-50 text-green-700 border-green-200" :
+                    c.status === "Written Off" ? "bg-neutral-surface text-neutral-ink/50 border-neutral-border" :
+                    c.status === "Violation Detected" ? "bg-red-50 text-red-700 border-red-200" :
+                    "bg-orange-50 text-orange-700 border-orange-200"
                   }`}>
                     {c.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="font-medium text-slate-200">{formatINR(c.penaltyAmount)}</span>
+                <td className="px-6 py-4 text-right">
+                  <span className="font-bold text-brand-900 block">{formatINR(c.penaltyAmount)}</span>
                   {c.status !== "Collected" && c.status !== "Written Off" && c.penaltyAmount > 0 && (
-                     <span className="block text-[10px] text-orange-400">Bal: {formatINR(c.penaltyAmount - c.amountPaid)}</span>
+                     <span className="block text-[10px] font-bold uppercase tracking-widest text-red-600 mt-0.5">Pend: {formatINR(c.penaltyAmount - c.amountPaid)}</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <Link to={`/court-cases/${c.id}`} className="inline-flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+                <td className="px-6 py-4 text-right">
+                  <Link to={`/court-cases/${c.id}`} className="inline-flex p-2 rounded-lg text-neutral-ink/40 group-hover:text-brand-700 group-hover:bg-brand-50 border border-transparent group-hover:border-brand-200 transition-colors">
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                 </td>
               </tr>
             ))}
+            {filteredCases.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center">
+                  <Scale className="w-8 h-8 text-neutral-ink/20 mx-auto mb-3" />
+                  <p className="text-brand-900 font-bold text-sm">No cases found.</p>
+                  <p className="text-neutral-ink/50 text-xs mt-1">Adjust search terms or filters.</p>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
