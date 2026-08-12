@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, {
   Source,
   Layer,
@@ -15,17 +15,26 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin, Layers } from "lucide-react";
 import type { Quarry } from "../../../types/quarry";
 import { STATUS_META, type QuarryStatus } from "../../../types/common";
-import { TN_CENTER, TN_BOUNDS } from "../../../data/mock/districts";
+import { TN_CENTER, TN_BOUNDS, DISTRICT_CENTERS } from "../../../data/mock/districts";
 import { useDashboardStore } from "../../../store/dashboardStore";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
 
-/**
- * OpenFreeMap (https://openfreemap.org) — a fully free, no-signup, no-token, no-billing
- * vector tile + style host built on OpenStreetMap data. Chosen over Mapbox specifically
- * because Mapbox now requires a billing-enabled account even for its free tier.
- */
-const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
+const minimalMapStyle = {
+  version: 8 as const,
+  name: "Empty",
+  sources: {},
+  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  layers: [
+    {
+      id: "background",
+      type: "background",
+      paint: {
+        "background-color": "#f1f5f9", // slate-100
+      },
+    } as any,
+  ],
+};
 
 const TN_DISTRICTS_GEOJSON_URL = "/geo/tn-districts.geojson?v=3";
 
@@ -79,6 +88,16 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
 
   const geojson = useMemo(() => quarriesToGeoJSON(quarries), [quarries]);
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (selectedDistrict && DISTRICT_CENTERS[selectedDistrict as keyof typeof DISTRICT_CENTERS]) {
+      const center = DISTRICT_CENTERS[selectedDistrict as keyof typeof DISTRICT_CENTERS];
+      mapRef.current.flyTo({ center: [center.lng, center.lat], zoom: 8, duration: 1000 });
+    } else {
+      mapRef.current.flyTo({ center: [TN_CENTER.lng, TN_CENTER.lat], zoom: 6.0, duration: 1000 });
+    }
+  }, [selectedDistrict]);
 
   const handleClick = useCallback(
     (event: MapMouseEvent) => {
@@ -153,13 +172,14 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
       )}
       <Map
         ref={mapRef}
-        initialViewState={{ longitude: TN_CENTER.lng, latitude: TN_CENTER.lat, zoom: 6.4 }}
+        initialViewState={{ longitude: TN_CENTER.lng, latitude: TN_CENTER.lat, zoom: 6.0 }}
         maxBounds={[
-          [TN_BOUNDS.minLng - 1, TN_BOUNDS.minLat - 1], // South West
-          [TN_BOUNDS.maxLng + 1, TN_BOUNDS.maxLat + 1], // North East
+          [TN_BOUNDS.minLng - 3, TN_BOUNDS.minLat - 3], // South West
+          [TN_BOUNDS.maxLng + 3, TN_BOUNDS.maxLat + 3], // North East
         ] as any}
+        minZoom={5}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={MAP_STYLE_URL}
+        mapStyle={minimalMapStyle}
         interactiveLayerIds={[CLUSTER_LAYER, UNCLUSTERED_LAYER, "tn-district-fill"]}
         onClick={handleClick}
         onMouseMove={handleMouseMove}
@@ -182,10 +202,10 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
               "fill-color": [
                 "case",
                 ["==", ["get", "dtname"], selectedDistrict || ""],
-                "rgba(239, 68, 68, 0.15)", // red-500 with opacity
+                "rgba(239, 68, 68, 0.25)", // red-500 with opacity
                 ["==", ["get", "dtname"], hoveredDistrict || ""],
-                "rgba(248, 113, 113, 0.1)", // red-400 with opacity
-                "transparent"
+                "rgba(248, 113, 113, 0.15)", // red-400 with opacity
+                "#ffffff" // white background for districts
               ],
               "fill-outline-color": "transparent"
             }}
@@ -198,7 +218,7 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
                 "case",
                 ["==", ["get", "dtname"], selectedDistrict || ""],
                 "#ef4444", // Solid red-500 for selected
-                "#7A0C2E" // Default
+                "#cbd5e1" // slate-300 default line color
               ],
               "line-width": [
                 "case",
@@ -206,13 +226,48 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
                 2,
                 1
               ],
-              "line-opacity": [
+              "line-opacity": 1,
+              "line-dasharray": [2, 1.5],
+            }}
+          />
+          <Layer
+            id="tn-district-labels"
+            type="symbol"
+            layout={{
+              "text-field": [
+                "coalesce",
+                ["get", "dtname"],
+                ["get", "Dist_Name"],
+                ["get", "NAME_2"],
+                ["get", "district"],
+                ["get", "name"],
+                ""
+              ],
+              "text-font": ["Noto Sans Bold"],
+              "text-size": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                6, 8,
+                8, 11
+              ],
+              "text-transform": "uppercase",
+              "text-letter-spacing": 0.05,
+              "text-justify": "center"
+            }}
+            paint={{
+              "text-color": "#94a3b8", // slate-400
+              "text-halo-color": "#ffffff",
+              "text-halo-width": 2,
+              "text-halo-blur": 1,
+              "text-opacity": [
                 "case",
                 ["==", ["get", "dtname"], selectedDistrict || ""],
                 1,
-                0.45
-              ],
-              "line-dasharray": [2, 1.5],
+                ["==", ["get", "dtname"], hoveredDistrict || ""],
+                1,
+                0.8
+              ]
             }}
           />
         </Source>

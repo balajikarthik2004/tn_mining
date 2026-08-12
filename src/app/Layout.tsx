@@ -106,7 +106,6 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
-      <div className="border-t border-white/10 p-3 text-[11px] text-white/50">Prototype build · mock data only</div>
     </div>
   );
 }
