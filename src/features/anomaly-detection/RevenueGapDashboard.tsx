@@ -52,34 +52,34 @@ export function RevenueGapDashboard({ quarries }: Props) {
   return (
     <div className="space-y-6 mb-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-          <h3 className="text-sm font-medium text-slate-400">Monthly Revenue Gap</h3>
-          <p className="text-3xl font-bold text-red-500 mt-2">{formatINR(data.totalGap)}</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Monthly Revenue Gap</h3>
+          <p className="text-3xl font-bold text-red-600 mt-2">{formatINR(data.totalGap)}</p>
         </div>
-        <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-          <h3 className="text-sm font-medium text-slate-400">Total Potential Revenue</h3>
-          <p className="text-3xl font-bold text-slate-100 mt-2">{formatINR(data.totalPotentialRevenue)}</p>
-          <p className="text-sm text-slate-500 mt-1">Declared: {formatINR(data.totalDeclaredRevenue)}</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Potential Revenue</h3>
+          <p className="text-3xl font-bold text-brand-900 mt-2">{formatINR(data.totalPotentialRevenue)}</p>
+          <p className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wide">Declared: {formatINR(data.totalDeclaredRevenue)}</p>
         </div>
-        <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm">
-          <h3 className="text-sm font-medium text-slate-400">Projected Annual Recovery</h3>
-          <p className="text-3xl font-bold text-emerald-500 mt-2">{formatINR(data.projectedAnnualRecovery)}</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Projected Annual Recovery</h3>
+          <p className="text-3xl font-bold text-emerald-600 mt-2">{formatINR(data.projectedAnnualRecovery)}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm h-[340px] flex flex-col">
-          <h3 className="text-sm font-medium text-slate-200 mb-6">Top 5 Districts by Leakage</h3>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm h-[340px] flex flex-col">
+          <h3 className="text-xs font-bold text-brand-900 uppercase tracking-widest mb-6 border-b border-slate-100 pb-2">Top 5 Districts by Leakage</h3>
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.districtChartData} layout="vertical" margin={{ left: 40, right: 20, top: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-                <XAxis type="number" stroke="#94a3b8" tickFormatter={(v) => `₹${(v/100000).toFixed(0)}L`} fontSize={12} />
-                <YAxis dataKey="name" type="category" stroke="#94a3b8" width={80} fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                <XAxis type="number" stroke="#64748b" tickFormatter={(v) => `₹${(v/100000).toFixed(0)}L`} fontSize={12} />
+                <YAxis dataKey="name" type="category" stroke="#475569" width={80} fontSize={12} fontWeight={600} />
                 <Tooltip 
                   formatter={(value: any) => [formatINR(value as number), "Revenue Loss"]} 
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', borderRadius: '0.5rem' }}
-                  cursor={{ fill: '#334155', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  cursor={{ fill: '#f1f5f9', opacity: 0.8 }}
                 />
                 <Bar dataKey="value" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
@@ -87,8 +87,8 @@ export function RevenueGapDashboard({ quarries }: Props) {
           </div>
         </div>
 
-        <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-xl p-5 shadow-sm h-[340px] flex flex-col">
-          <h3 className="text-sm font-medium text-slate-200 mb-2">Mineral-wise Leakage</h3>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm h-[340px] flex flex-col">
+          <h3 className="text-xs font-bold text-brand-900 uppercase tracking-widest mb-2 border-b border-slate-100 pb-2">Mineral-wise Leakage</h3>
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -98,9 +98,10 @@ export function RevenueGapDashboard({ quarries }: Props) {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
-                  innerRadius={60}
-                  paddingAngle={2}
+                  outerRadius={90}
+                  innerRadius={50}
+                  paddingAngle={3}
+                  stroke="none"
                 >
                   {data.mineralChartData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -108,9 +109,9 @@ export function RevenueGapDashboard({ quarries }: Props) {
                 </Pie>
                 <Tooltip 
                   formatter={(value: any) => [formatINR(value as number), "Revenue Loss"]}
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', borderRadius: '0.5rem' }}
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
-                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px', color: '#475569', fontWeight: 500 }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
