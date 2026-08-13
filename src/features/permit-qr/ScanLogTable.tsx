@@ -1,88 +1,124 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Search, ShieldCheck, ShieldAlert, List } from "lucide-react";
 import type { ScanEvent } from "../../types/permit";
 import { formatDateTime } from "../../utils/formatters";
-import { Search, Filter, ShieldCheck, ShieldAlert, List } from "lucide-react";
 
 interface Props {
   scans: ScanEvent[];
 }
 
+const FILTERS = ["All", "Valid", "Invalid"] as const;
+/** Rows rendered at once — the count is disclosed under the table rather than truncating silently. */
+const ROW_LIMIT = 100;
+
 export function ScanLogTable({ scans }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState<"All" | "Valid" | "Invalid">("All");
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
 
-  const filteredScans = scans.filter(s => {
-    const matchesSearch = s.permitId.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          s.scannedByOfficer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === "All" || s.result === filter;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredScans = useMemo(() => {
+    const needle = searchTerm.trim().toLowerCase();
+    return scans.filter((s) => {
+      const matchesSearch =
+        !needle ||
+        s.permitId.toLowerCase().includes(needle) ||
+        s.scannedByOfficer.toLowerCase().includes(needle) ||
+        s.location.name.toLowerCase().includes(needle) ||
+        (s.quarryName?.toLowerCase().includes(needle) ?? false);
+      const matchesFilter = filter === "All" || s.result === filter;
+      return matchesSearch && matchesFilter;
+    });
+  }, [scans, searchTerm, filter]);
+
+  const visibleScans = filteredScans.slice(0, ROW_LIMIT);
 
   return (
-    <div className="bg-white border border-neutral-border rounded-2xl overflow-hidden shadow-sm flex flex-col h-[500px]">
-      <div className="p-4 sm:px-6 border-b border-neutral-border bg-neutral-surface shrink-0">
-        <h3 className="font-bold text-brand-900 flex items-center gap-2 mb-4">
-          <List className="w-5 h-5 text-brand-500" />
-          Checkpost Scan Ledger
-        </h3>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-ink/40" />
-            <input
-              type="text"
-              placeholder="Search by e-Pass ID or Officer..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full bg-white border border-neutral-border rounded-lg pl-9 pr-4 py-2 text-sm text-brand-900 placeholder-neutral-ink/40 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-shadow shadow-sm"
-            />
+    <div className="surface-card flex h-[520px] flex-col overflow-hidden">
+      <div className="shrink-0 border-b border-neutral-line px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="flex items-center gap-2 font-heading text-[15px] font-bold text-brand-900">
+              <List className="h-4 w-4 text-brand-500" />
+              Checkpost scan ledger
+            </h3>
+            <p className="mt-0.5 text-xs text-neutral-ink/50">
+              Every e-Pass scan recorded today, newest first
+            </p>
           </div>
-          <div className="flex items-center gap-2 bg-white border border-neutral-border rounded-lg px-2 shrink-0 shadow-sm">
-            <Filter className="w-4 h-4 text-neutral-ink/40 ml-2" />
-            <select
-              value={filter}
-              onChange={e => setFilter(e.target.value as any)}
-              className="bg-transparent border-none text-sm font-bold text-brand-900 focus:outline-none py-2 pr-4 cursor-pointer"
-            >
-              <option value="All">All Scans</option>
-              <option value="Valid">Valid Only</option>
-              <option value="Invalid">Invalid/Forged Only</option>
-            </select>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {FILTERS.map((level) => (
+              <button
+                key={level}
+                onClick={() => setFilter(level)}
+                className={`rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest ring-1 ring-inset transition-all ${filter === level
+                  ? "bg-brand-900 text-white ring-brand-900"
+                  : "bg-neutral-surface text-neutral-ink/55 ring-neutral-border hover:text-brand-900"
+                  }`}
+              >
+                {level === "Invalid" ? "Rejected" : level === "Valid" ? "Cleared" : "All"}
+              </button>
+            ))}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-ink/35" />
+              <input
+                type="text"
+                placeholder="e-Pass, quarry, officer or post…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-neutral-border bg-neutral-surface py-2 pl-9 pr-3 text-sm outline-none transition-all placeholder:text-neutral-ink/40 focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 sm:w-72"
+              />
+            </div>
           </div>
         </div>
       </div>
-      
-      <div className="flex-1 overflow-auto custom-scrollbar relative">
-        <table className="w-full text-left text-sm min-w-[700px]">
-          <thead className="text-[10px] uppercase tracking-widest bg-white text-neutral-ink/50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0] font-black">
-            <tr>
-              <th className="px-6 py-4">e-Pass ID</th>
-              <th className="px-6 py-4">Timestamp</th>
-              <th className="px-6 py-4">Location</th>
-              <th className="px-6 py-4">Scanning Officer</th>
-              <th className="px-6 py-4">Result</th>
+
+      <div className="min-h-0 flex-1 overflow-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
+          <thead className="sticky top-0 z-10">
+            <tr className="bg-neutral-subtle/95 text-[11px] uppercase tracking-[0.08em] text-neutral-ink/50 backdrop-blur-sm">
+              <th className="border-b border-neutral-border px-5 py-3 font-bold">e-Pass</th>
+              <th className="border-b border-neutral-border px-5 py-3 font-bold">Time</th>
+              <th className="border-b border-neutral-border px-5 py-3 font-bold">Checkpost</th>
+              <th className="border-b border-neutral-border px-5 py-3 font-bold">Officer</th>
+              <th className="border-b border-neutral-border px-5 py-3 font-bold">Result</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-border/60">
-            {filteredScans.slice(0, 100).map(scan => (
-              <tr key={scan.id} className="hover:bg-neutral-50/50 transition-colors">
-                <td className="px-6 py-4">
-                  <span className="font-mono text-xs font-bold text-brand-900 bg-neutral-surface px-2 py-1 rounded border border-neutral-border">
+          <tbody>
+            {visibleScans.map((scan) => (
+              <tr
+                key={scan.id}
+                className="border-b border-neutral-line transition-colors last:border-0 hover:bg-brand-50/40"
+              >
+                <td className="px-5 py-3">
+                  <span className="rounded-md border border-neutral-border bg-neutral-subtle px-2 py-1 font-mono text-xs font-semibold text-brand-900">
                     {scan.permitId}
                   </span>
+                  <span className="mt-1 block truncate text-[11px] font-semibold text-neutral-ink/45">
+                    {scan.quarryName ?? "No matching quarry record"}
+                  </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap font-bold text-neutral-ink/80">{formatDateTime(scan.timestamp)}</td>
-                <td className="px-6 py-4 font-bold text-brand-900">{scan.location.name}</td>
-                <td className="px-6 py-4 font-medium text-neutral-ink/70">{scan.scannedByOfficer}</td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm ${
-                    scan.result === "Valid" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"
-                  }`}>
-                    {scan.result === "Valid" ? <ShieldCheck className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
-                    {scan.result}
+                <td className="whitespace-nowrap px-5 py-3 tabular-nums text-neutral-ink/70">
+                  {formatDateTime(scan.timestamp)}
+                </td>
+                <td className="px-5 py-3 font-semibold text-brand-900">{scan.location.name}</td>
+                <td className="px-5 py-3 text-neutral-ink/70">{scan.scannedByOfficer}</td>
+                <td className="px-5 py-3">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ring-1 ring-inset ${scan.result === "Valid"
+                      ? "bg-status-compliant/10 text-emerald-700 ring-status-compliant/25"
+                      : "bg-status-violation/10 text-red-700 ring-status-violation/25"
+                      }`}
+                  >
+                    {scan.result === "Valid" ? (
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                    ) : (
+                      <ShieldAlert className="h-3.5 w-3.5" />
+                    )}
+                    {scan.result === "Valid" ? "Cleared" : "Rejected"}
                   </span>
                   {scan.invalidReason && (
-                    <span className="block mt-1.5 text-[9px] font-black text-red-600/80 uppercase tracking-widest">
-                      Reason: {scan.invalidReason}
+                    <span className="mt-1 block text-[10px] font-bold uppercase tracking-widest text-red-600/80">
+                      {scan.invalidReason}
                     </span>
                   )}
                 </td>
@@ -90,12 +126,19 @@ export function ScanLogTable({ scans }: Props) {
             ))}
           </tbody>
         </table>
+
         {filteredScans.length === 0 && (
-          <div className="p-12 flex flex-col items-center justify-center text-neutral-ink/50">
-            <Search className="w-8 h-8 mb-3 opacity-20" />
-            <p className="font-bold text-sm">No scan events found matching criteria.</p>
+          <div className="flex flex-col items-center justify-center p-12 text-neutral-ink/50">
+            <Search className="mb-3 h-8 w-8 opacity-20" />
+            <p className="text-sm font-semibold">No scans match those criteria.</p>
           </div>
         )}
+      </div>
+
+      <div className="shrink-0 border-t border-neutral-line bg-neutral-subtle/50 px-5 py-2.5 text-[11px] font-semibold text-neutral-ink/50">
+        Showing {visibleScans.length.toLocaleString("en-IN")} of{" "}
+        {filteredScans.length.toLocaleString("en-IN")} scans
+        {filteredScans.length > ROW_LIMIT && " — refine the search to see the rest"}
       </div>
     </div>
   );

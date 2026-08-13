@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import type { CourtCase } from "../../types/courtCases";
-import { formatINR } from "../../utils/formatters";
 import { IndianRupee, TrendingUp, AlertCircle, FileX } from "lucide-react";
+import type { CourtCase } from "../../types/courtCases";
+import { formatINR, formatINRCompact } from "../../utils/formatters";
+import { StatCard } from "../../components/ui/StatCard";
 
 interface Props {
   cases: CourtCase[];
@@ -14,58 +15,55 @@ export function PenaltyCollectionDashboard({ cases }: Props) {
     let totalOutstanding = 0;
     let totalWrittenOff = 0;
 
-    cases.forEach(c => {
+    cases.forEach((c) => {
       totalImposed += c.penaltyAmount;
       totalCollected += c.amountPaid;
       if (c.status === "Written Off") {
         totalWrittenOff += c.penaltyAmount;
       } else {
-        totalOutstanding += (c.penaltyAmount - c.amountPaid);
+        totalOutstanding += c.penaltyAmount - c.amountPaid;
       }
     });
 
-    return { totalImposed, totalCollected, totalOutstanding, totalWrittenOff };
+    const recoveryRate = totalImposed ? (totalCollected / totalImposed) * 100 : 0;
+    return { totalImposed, totalCollected, totalOutstanding, totalWrittenOff, recoveryRate };
   }, [cases]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="bg-white border border-neutral-border rounded-2xl p-4 shadow-sm overflow-hidden flex flex-col justify-center">
-        <h3 className="text-[10px] font-black text-neutral-ink/50 uppercase tracking-widest flex items-center gap-1.5 truncate">
-          <TrendingUp className="w-3.5 h-3.5 text-brand-500 shrink-0" /> Total Penalties Imposed
-        </h3>
-        <p className="text-xl font-black text-brand-900 mt-2 truncate" title={formatINR(stats.totalImposed)}>{formatINR(stats.totalImposed)}</p>
-        <p className="text-[10px] font-bold text-neutral-ink/60 mt-1 uppercase tracking-wide truncate">Across {cases.length} active cases</p>
-      </div>
-      
-      <div className="bg-white border border-emerald-200 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-center">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -translate-y-12 translate-x-12"></div>
-        <div className="relative z-10 w-full">
-          <h3 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest flex items-center gap-1.5 truncate">
-            <IndianRupee className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Amount Collected
-          </h3>
-          <p className="text-xl font-black text-emerald-700 mt-2 truncate" title={formatINR(stats.totalCollected)}>{formatINR(stats.totalCollected)}</p>
-          <p className="text-[10px] font-bold text-emerald-700/70 mt-1 uppercase tracking-wide truncate">{((stats.totalCollected / stats.totalImposed) * 100).toFixed(1)}% recovery rate</p>
-        </div>
-      </div>
-
-      <div className="bg-white border border-red-200 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-center">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full -translate-y-12 translate-x-12"></div>
-        <div className="relative z-10 w-full">
-          <h3 className="text-[10px] font-black text-red-700 uppercase tracking-widest flex items-center gap-1.5 truncate">
-            <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" /> Outstanding Arrears
-          </h3>
-          <p className="text-xl font-black text-red-700 mt-2 truncate" title={formatINR(stats.totalOutstanding)}>{formatINR(stats.totalOutstanding)}</p>
-          <p className="text-[10px] font-bold text-red-700/70 mt-1 uppercase tracking-wide truncate">Pending collection/appeals</p>
-        </div>
-      </div>
-
-      <div className="bg-white border border-neutral-border rounded-2xl p-4 shadow-sm bg-neutral-surface overflow-hidden flex flex-col justify-center">
-        <h3 className="text-[10px] font-black text-neutral-ink/50 uppercase tracking-widest flex items-center gap-1.5 truncate">
-          <FileX className="w-3.5 h-3.5 text-neutral-ink/40 shrink-0" /> Written Off
-        </h3>
-        <p className="text-xl font-black text-brand-900 mt-2 truncate" title={formatINR(stats.totalWrittenOff)}>{formatINR(stats.totalWrittenOff)}</p>
-        <p className="text-[10px] font-bold text-neutral-ink/60 mt-1 uppercase tracking-wide truncate">Unrecoverable / court dismissed</p>
-      </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <StatCard
+        label="Penalties imposed"
+        value={formatINRCompact(stats.totalImposed)}
+        valueTitle={formatINR(stats.totalImposed)}
+        icon={TrendingUp}
+        accent="brand"
+        hint={`Across ${cases.length} active cases`}
+      />
+      <StatCard
+        label="Amount collected"
+        value={formatINRCompact(stats.totalCollected)}
+        valueTitle={formatINR(stats.totalCollected)}
+        icon={IndianRupee}
+        accent="compliant"
+        hint={`${stats.recoveryRate.toFixed(1)}% recovery rate`}
+      />
+      <StatCard
+        label="Outstanding arrears"
+        value={formatINRCompact(stats.totalOutstanding)}
+        valueTitle={formatINR(stats.totalOutstanding)}
+        icon={AlertCircle}
+        accent="violation"
+        hint="Pending collection or under appeal"
+        emphasis
+      />
+      <StatCard
+        label="Written off"
+        value={formatINRCompact(stats.totalWrittenOff)}
+        valueTitle={formatINR(stats.totalWrittenOff)}
+        icon={FileX}
+        accent="expired"
+        hint="Unrecoverable or court dismissed"
+      />
     </div>
   );
 }

@@ -25,7 +25,7 @@ export interface NavItem {
 
 /** All planned features — grouped so the sidebar reads as a workflow, not a flat list. */
 export const NAV_ITEMS: NavItem[] = [
-  { id: "dashboard", label: "Quarry Map Dashboard", path: "/", icon: Map, enabled: true, section: "Overview" },
+  { id: "dashboard", label: "Dashboard", path: "/", icon: Map, enabled: true, section: "Overview" },
   {
     id: "anomaly-detection",
     label: "AI Anomaly Detection",

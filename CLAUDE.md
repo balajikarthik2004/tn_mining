@@ -43,7 +43,12 @@ one-off `slate-*`/`sky-*` values, so a future retheme is a one-file change.
 Custom utilities (declared with `@utility`, so ordinary Tailwind classes still override them):
 `page-canvas` (page background wash), `surface-card` (white card + ring + elevation), `glass-bar`
 (frosted header), `chrome-deep` (navy sidebar/hero), `text-gradient-brand`, `shimmer`,
-`hide-scrollbar`, plus `.scrollbar-light` for dark panels.
+`hover-progress` (line that sweeps left→right along a card's bottom edge on hover; colour it with
+`[--progress-color:var(--color-…)]`), `hide-scrollbar`, plus `.scrollbar-light` for dark panels.
+
+**Every KPI tile is `<StatCard>`.** The dashboard, licensing, QR permit, transport and anomaly stat
+rows all render it, so a metric looks identical everywhere — pass `accent` for colour, `hint` for the
+sub-line, `emphasis` for a card that needs action. Don't hand-roll a `bg-white … text-3xl` tile.
 
 Shared chrome components — reach for these before hand-rolling one: `<Card>`/`<CardHeader>`,
 `<StatCard>` (accents: `brand | compliant | warning | violation | expired | gold`), `<StatusBadge>`
@@ -64,11 +69,19 @@ Greens are `emerald-*` and warm warnings are `amber-*` throughout — don't rein
 Two categories, kept deliberately distinct (see `DataSourcesNote.tsx`, surfaced in-app via the
 "Data & sources" link on the dashboard):
 
-- **Real, published data:** Tamil Nadu district boundaries (`public/geo/tn-districts.geojson`, MIT-licensed,
-  derived from Survey of India/Census 2011 data — see `public/geo/README.md`); the seigniorage fee
+- **Real, published data:** quarry **locations, pit outlines and mapped areas** — every demo quarry
+  sits on an actual working site, from OpenStreetMap `landuse=quarry` polygons (ODbL) via
+  `scripts/build-quarry-sites.mjs`; Tamil Nadu district boundaries — all **38 present-day districts**
+  (`public/geo/tn-districts.geojson`, MIT-licensed, derived from Survey of India/Census data — see
+  `public/geo/README.md`), plus the state mask/outline used to show Tamil Nadu only; the seigniorage fee
   (royalty) rate per mineral type (`src/data/mock/officialRates.ts`, sourced from Tamil Nadu Government
   Gazette Extraordinary No. 417, 28 Dec 2017, Appendix-II — a real cited government notification);
   district town locations.
+- **Real, published statistics:** `src/data/mock/officialStatistics.ts` holds state mineral revenue by
+  year, statewide enforcement outcomes (vehicles seized, penalties, FIRs) and leased areas, quoted from
+  the *Tamil Nadu Mines and Minerals Policy Note 2020-21*. The anomaly page shows these in a separate
+  "For scale" panel so the modelled gap can be judged against something verifiable — keep that
+  separation; never blend them into the seeded figures.
 - **Illustrative/seeded data:** quarry names, operator names/contacts, license numbers, extraction
   volumes, inspection records, violation/compliance status. These are clearly-fictional placeholder
   values — **never** attach a fabricated "real" company name to a violation/compliance status; there is
@@ -163,10 +176,30 @@ scripts/          build-district-geojson.mjs — regenerates public/geo/tn-distr
   a single `DISTRICT_NAME_EXPR` coalesce (`dtname → NAME_2 → Dist_Name → district → name`). Earlier code
   compared `["get","dtname"]` directly, which is always null in the bundled file, so the selected/hovered
   district silently never highlighted. Use the shared expression for any new district-keyed styling.
-- **Quarry scatter must stay wide enough to separate on screen.** `generateMockData` anchors each quarry
-  on its district's real mining locality and scatters ±0.05° (~5 km). An earlier ±0.001° (~100 m) spread
-  stacked every quarry in a district onto one pixel, so filtering to a district showed a single marker.
-  The district camera uses `fitBounds` over that district's quarries (maxZoom 10.5), not a fixed zoom.
+- **Quarry coordinates are real; don't re-randomise them.** `generateMockData` walks `QUARRY_SITES`
+  (generated into `src/data/mock/quarrySites.ts`) and places one demo quarry per real mapped pit, using
+  the site's centroid verbatim — no jitter. `Quarry.siteId` links to the pit outline in
+  `public/geo/quarry-sites.geojson`, which the anomaly and licence detail maps fetch to draw the actual
+  footprint; `Quarry.siteAreaSqM` is the real mapped area and also scales declared volumes so a huge pit
+  doesn't report the same output as a two-hectare one. Earlier builds scattered quarries around district
+  centres, which put "quarries" on farmland and housing. `DISTRICT_CENTERS` (with its bbox-derived
+  `jitter`) is retained for districts without a mapped site and for framing.
+- **Coverage follows reality:** 35 of 38 districts have mapped pits. Chennai, Thiruvarur and
+  Mayiladuthurai have none — that's correct for those districts, not a data gap to paper over.
+- **The map shows Tamil Nadu only, and won't zoom out past the state.** `tn-mask.geojson` (world minus
+  TN) is painted over the basemap and `tn-outline.geojson` draws the border. On load the map fits
+  `TN_BOUNDS`, then pins that as `minZoom` and derives `maxBounds` from the fitted view — the scale bar
+  reads 100 km there. Do **not** set `maxBounds` as a static prop: with a wide viewport MapLibre
+  satisfies it by zooming *in*, which silently overrides the state-wide framing. The fit also has to run
+  a frame after `load`, or it uses a stale container size and leaves the state cropped.
+- **Detail routes reuse their component, so maps must be told to move.** Navigating
+  `/anomaly-detection/Q-007 → /Q-047` re-renders the same component instead of remounting it, so a
+  map configured only through `initialViewState` keeps pointing at the previous record. Every
+  `/:id` map needs a `ref` + a `flyTo` effect keyed on the record (see `AnomalyDetailPage`), and the
+  record state should be cleared while the new id resolves so stale figures never flash.
+- **Camera targets under a floating panel need padding.** The Anomaly Radar's glass panel covers the
+  left ~370px of its map, so a plain `flyTo({center})` hides the quarry the user just clicked. Pass
+  `padding: { left: … }` (desktop only) to keep the target in the visible area.
 - **Overlays that must sit above the topbar need a portal.** `<main>` carries `animate-fade-in`, and a
   CSS animation touching `opacity` creates a stacking context — so a `fixed`, high-`z-index` child of a
   page (e.g. `QuarrySidePanel`) still paints *below* the sibling topbar. Both the side panel and `Modal`

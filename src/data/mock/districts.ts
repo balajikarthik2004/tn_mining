@@ -46,7 +46,7 @@ export const DISTRICT_CENTERS: Record<
   Tirupathur: { lat: 12.547, lng: 78.619, jitter: 0.08 },
   Tiruppur: { lat: 10.885, lng: 77.509, jitter: 0.08 },
   Tiruvannamalai: { lat: 12.3, lng: 78.969, jitter: 0.08 },
-  Tuticorin: { lat: 9.002, lng: 77.988, jitter: 0.08 },
+  Thoothukudi: { lat: 9.002, lng: 77.988, jitter: 0.08 },
   Vellore: { lat: 12.897, lng: 79.053, jitter: 0.08 },
   Villupuram: { lat: 12.155, lng: 79.473, jitter: 0.08 },
   Virudhunagar: { lat: 9.441, lng: 77.879, jitter: 0.08 },

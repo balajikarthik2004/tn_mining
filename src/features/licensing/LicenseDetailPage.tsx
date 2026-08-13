@@ -10,6 +10,8 @@ import { RenewalApplicationModal } from "./RenewalApplicationModal";
 import Map, { Source, Layer } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+const QUARRY_SITES_GEOJSON_URL = "/geo/quarry-sites.geojson?v=1";
+
 // Esri Hybrid Satellite style
 const MAP_STYLE = {
   version: 8,
@@ -82,10 +84,33 @@ export function LicenseDetailPage() {
     }
   }, [id]);
 
-  // Generate a mock polygon for the lease boundary based on the quarry lat/lng
+  // The real, mapped outline of this pit (OpenStreetMap landuse=quarry, ODbL) — served from
+  // public/ like the district boundaries, so it never enters the JS bundle.
+  const [siteFeature, setSiteFeature] = useState<any | null>(null);
+  useEffect(() => {
+    if (!quarry?.siteId) return;
+    let cancelled = false;
+    fetch(QUARRY_SITES_GEOJSON_URL)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setSiteFeature(
+          data.features.find((f: any) => f.properties?.siteId === quarry.siteId) ?? null
+        );
+      })
+      .catch(() => setSiteFeature(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [quarry?.siteId]);
+
   const leaseBoundaryGeojson = useMemo(() => {
     if (!quarry) return null;
-    const size = 0.003; // Approx 300m
+    if (siteFeature) {
+      return { type: "FeatureCollection", features: [siteFeature] };
+    }
+    // Fallback if the footprint file can't be reached: a plain ~300 m box around the pit centre.
+    const size = 0.003;
     return {
       type: "FeatureCollection",
       features: [
@@ -105,7 +130,7 @@ export function LicenseDetailPage() {
         }
       ]
     };
-  }, [quarry]);
+  }, [quarry, siteFeature]);
 
   if (!license || !quarry || !operator) {
     return (
@@ -218,7 +243,7 @@ export function LicenseDetailPage() {
                 </Map>
                 <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg border border-neutral-border shadow-sm text-xs font-bold text-brand-900 flex items-center gap-2">
                    <div className="w-4 h-4 border-2 border-yellow-600 border-dashed bg-yellow-500/20"></div>
-                   Approved Boundary (Geofence)
+                   Mapped pit outline (OSM)
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Pickaxe, CheckCircle2, Siren, Ban, IndianRupee } from "lucide-react";
 import type { Quarry } from "../../../types/quarry";
 import { StatCard } from "../../../components/ui/StatCard";
-import { formatINR } from "../../../utils/formatters";
+import { formatINR, formatINRCompact } from "../../../utils/formatters";
 
 interface StatCardsProps {
   quarries: Quarry[];
@@ -56,7 +56,8 @@ export function StatCards({ quarries }: StatCardsProps) {
       />
       <StatCard
         label="Royalty Collected"
-        value={formatINR(stats.revenueThisMonth)}
+        value={formatINRCompact(stats.revenueThisMonth)}
+        valueTitle={formatINR(stats.revenueThisMonth)}
         icon={IndianRupee}
         accent="gold"
         hint="This month, seigniorage fee"

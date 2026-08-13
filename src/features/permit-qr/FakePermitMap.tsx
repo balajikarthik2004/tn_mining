@@ -14,7 +14,7 @@ const MAP_STYLE = {
         "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
       ],
       tileSize: 256,
-      attribution: "Tiles &copy; Esri"
+      attribution: "&copy; Esri &mdash; Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP"
     },
     "esri-reference": {
       type: "raster",
@@ -67,17 +67,35 @@ interface Props {
 }
 
 export function FakePermitMap({ scans }: Props) {
-  const fakeScans = useMemo(() => scans.filter(s => s.result === "Invalid"), [scans]);
+  const fakeScans = useMemo(() => scans.filter((s) => s.result === "Invalid"), [scans]);
+
+  /**
+   * Tally per rejection reason — a legend that carries data beats a paragraph explaining the map.
+   * (Uses a record, not `new Map()`: the react-map-gl `Map` import shadows the global here.)
+   */
+  const reasonCounts = useMemo(() => {
+    const tally: Record<string, number> = {};
+    fakeScans.forEach((s) => {
+      const reason = s.invalidReason ?? "Unspecified";
+      tally[reason] = (tally[reason] ?? 0) + 1;
+    });
+    return Object.entries(tally).sort((a, b) => b[1] - a[1]);
+  }, [fakeScans]);
 
   return (
-    <div className="bg-white border border-neutral-border rounded-2xl overflow-hidden shadow-sm h-full min-h-[500px] relative flex flex-col">
-      <div className="bg-neutral-surface px-6 py-3 border-b border-neutral-border shrink-0 flex items-center justify-between z-10 relative">
-        <h3 className="font-bold text-brand-900 flex items-center gap-2">
-          <Crosshair className="w-5 h-5 text-brand-500" /> Illicit Transport Hotspots
-        </h3>
-        <span className="bg-red-50 text-red-700 text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded border border-red-200 shadow-sm flex items-center gap-1.5">
-           <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-           Live Feed
+    <div className="surface-card relative flex h-full flex-col overflow-hidden">
+      <div className="relative z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-neutral-line bg-neutral-subtle/60 px-5 py-4">
+        <div>
+          <h3 className="flex items-center gap-2 font-heading text-[15px] font-bold text-brand-900">
+            <Crosshair className="h-4 w-4 text-brand-500" /> Rejected scans by checkpost
+          </h3>
+          <p className="mt-0.5 text-xs text-neutral-ink/50">
+            Where today's failed e-Pass checks were recorded
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-status-violation/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-red-700 ring-1 ring-inset ring-status-violation/25">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-status-violation" />
+          {fakeScans.length} rejected
         </span>
       </div>
 
@@ -85,7 +103,7 @@ export function FakePermitMap({ scans }: Props) {
         <Map
           initialViewState={INITIAL_VIEW_STATE}
           mapStyle={MAP_STYLE}
-          attributionControl={false}
+          attributionControl={{ compact: true }}
         >
           <NavigationControl position="bottom-right" />
 
@@ -107,9 +125,9 @@ export function FakePermitMap({ scans }: Props) {
                     <ShieldAlert className="w-4 h-4 text-red-500" />
                     <span className="text-red-700 font-black uppercase tracking-widest text-[10px]">{scan.invalidReason}</span>
                   </div>
-                  <div className="font-bold text-sm text-brand-900">{scan.location.name}</div>
-                  <div className="text-[10px] font-bold text-neutral-ink/50 uppercase tracking-widest mt-1 border-t border-neutral-border pt-1">
-                    Scan ID: {scan.id.split('-').pop()}
+                  <div className="text-sm font-bold text-brand-900">{scan.location.name}</div>
+                  <div className="mt-1 border-t border-neutral-line pt-1 text-[10px] font-bold uppercase tracking-widest text-neutral-ink/50">
+                    {scan.quarryName ?? "No matching quarry record"}
                   </div>
                 </div>
               </div>
@@ -117,11 +135,21 @@ export function FakePermitMap({ scans }: Props) {
           ))}
         </Map>
         
-        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-xl border border-neutral-border shadow-sm max-w-xs">
-           <h4 className="font-bold text-brand-900 text-sm mb-1">Enforcement Mapping</h4>
-           <p className="text-xs font-medium text-neutral-ink/60 leading-relaxed">
-             This map plots the exact GPS coordinates of all forged or invalid QR e-Pass scans to help identify smuggling corridors.
-           </p>
+        <div className="glass-bar absolute left-3 top-3 rounded-xl p-3 text-xs shadow-card ring-1 ring-inset ring-neutral-border">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-neutral-ink/50">
+            Rejections by reason
+          </p>
+          <ul className="space-y-1.5">
+            {reasonCounts.map(([reason, count]) => (
+              <li key={reason} className="flex items-center justify-between gap-6 font-medium text-neutral-ink/75">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-status-violation" />
+                  {reason}
+                </span>
+                <span className="font-bold tabular-nums text-brand-900">{count}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

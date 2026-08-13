@@ -1,20 +1,33 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { 
-  ArrowLeft, AlertTriangle, Send, FileText, ChevronRight, Activity,
-  MapPin, ShieldAlert, User, FileDigit, Layers, Crosshair
+import {
+  ArrowLeft, AlertTriangle, FileText, ChevronRight, Activity, MapPin, User, FileDigit,
+  Layers, Crosshair, Copy, Check, SearchX, Locate, Send, ShieldAlert, ClipboardCheck,
+  type LucideIcon,
 } from "lucide-react";
 import { getMockData } from "../../data/mock/generateMockData";
 import type { Quarry } from "../../types/quarry";
 import { calculateSeverity, calculateRevenueLoss, m3ToTonnes } from "../../utils/anomalyUtils";
 import { generateAnomalyExplanation, draftShowCauseNotice } from "../../services/claude";
-import { formatINR } from "../../utils/formatters";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import Map, { Source, Layer, NavigationControl, FullscreenControl } from "react-map-gl/maplibre";
+import { formatINR, formatINRCompact, formatQuantityCompact } from "../../utils/formatters";
+import Map, { Source, Layer, NavigationControl, FullscreenControl, ScaleControl } from "react-map-gl/maplibre";
+import type { MapRef } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+/** Actions an officer can record against the case, in escalation order. */
+const ENFORCEMENT_ACTIONS: { label: string; icon: LucideIcon; tone: string }[] = [
+  { label: "Ground inspector dispatched", icon: Send, tone: "text-brand-500" },
+  { label: "Weighbridge audit requested", icon: ClipboardCheck, tone: "text-amber-600" },
+  { label: "Escalated to District Collector", icon: ShieldAlert, tone: "text-status-violation" },
+];
+
+const QUARRY_SITES_GEOJSON_URL = "/geo/quarry-sites.geojson?v=1";
 
 const SATELLITE_STYLE: any = {
   version: 8,
+  // Raster-only styles ship no glyphs; the pit label below is a symbol layer, so point at
+  // OpenFreeMap's font endpoint (same one QuarryMap uses) or the label silently fails to render.
+  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
   sources: {
     'esri-satellite': {
       type: 'raster',
@@ -66,13 +79,40 @@ const SATELLITE_STYLE: any = {
 
 export function AnomalyDetailPage() {
   const { id } = useParams();
+  const mapRef = useRef<MapRef>(null);
   const [quarry, setQuarry] = useState<Quarry | null>(null);
+  const [isResolved, setResolved] = useState(false);
+  const [hasCopiedCoords, setCopiedCoords] = useState(false);
 
   useEffect(() => {
+    // Reset first: navigating straight from /anomaly-detection/Q-047 to another id reuses this
+    // component, so without clearing we would render the previous quarry's figures for a frame.
+    setQuarry(null);
+    setResolved(false);
     const data = getMockData();
-    const found = data.quarries.find(q => q.id === id);
-    if (found) setQuarry(found);
+    setQuarry(data.quarries.find((q) => q.id === id) ?? null);
+    setResolved(true);
   }, [id]);
+
+  // The real, mapped pit outline for this quarry (OpenStreetMap landuse=quarry, ODbL). Fetched
+  // rather than bundled — the file is served from public/ like the district boundaries.
+  const [siteFeature, setSiteFeature] = useState<any | null>(null);
+  useEffect(() => {
+    if (!quarry?.siteId) return;
+    let cancelled = false;
+    fetch(QUARRY_SITES_GEOJSON_URL)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setSiteFeature(
+          data.features.find((f: any) => f.properties?.siteId === quarry.siteId) ?? null
+        );
+      })
+      .catch(() => setSiteFeature(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [quarry?.siteId]);
 
   const anomalyData = useMemo(() => {
     if (!quarry) return null;
@@ -87,214 +127,427 @@ export function AnomalyDetailPage() {
   }, [quarry]);
 
   const mapPolygons = useMemo(() => {
-    if (!quarry) return null;
-    const generatePolygon = (lat: number, lng: number, radiusDeg: number, points: number, irregularity: number) => {
-      const coords = [];
-      for (let i = 0; i < points; i++) {
-        const angle = (i * 360) / points;
-        const rad = (angle * Math.PI) / 180;
-        const r = radiusDeg + (Math.sin(i * 45) * irregularity); // stable pseudo-random
-        coords.push([
-          lng + r * Math.cos(rad),
-          lat + r * Math.sin(rad)
-        ]);
-      }
-      coords.push(coords[0]); // close the polygon
-      return coords;
-    };
+    if (!quarry || !anomalyData) return null;
 
-    // 0.001 degrees is ~111 meters.
-    const leaseCoords = generatePolygon(quarry.lat, quarry.lng, 0.0015, 12, 0.0002);
-    // AI boundary is slightly larger and more irregular
-    const aiCoords = generatePolygon(quarry.lat, quarry.lng, 0.0022, 16, 0.0005);
+    const gapRatio = quarry.declaredExtractionVolumeM3Monthly
+      ? anomalyData.gapM3 / quarry.declaredExtractionVolumeM3Monthly
+      : 1;
+    // The AI-observed extent is the licensed footprint grown by the same proportion as the
+    // volumetric over-extraction (capped so an extreme ratio stays readable on screen).
+    const growth = 1 + Math.min(0.45, Math.max(0.06, gapRatio * 0.5));
+
+    if (siteFeature?.geometry?.type === "Polygon") {
+      const ring: [number, number][] = siteFeature.geometry.coordinates[0];
+      const n = ring.length;
+      // Centroid of the real ring, used as the origin to scale it outward from.
+      const cx = ring.reduce((sum, c) => sum + c[0], 0) / n;
+      const cy = ring.reduce((sum, c) => sum + c[1], 0) / n;
+      const grown = ring.map(([lng, lat]) => [
+        cx + (lng - cx) * growth,
+        cy + (lat - cy) * growth,
+      ]);
+
+      return {
+        lease: {
+          type: "Feature" as const,
+          properties: {},
+          geometry: { type: "Polygon" as const, coordinates: [ring] },
+        },
+        ai: {
+          type: "Feature" as const,
+          properties: {},
+          geometry: { type: "Polygon" as const, coordinates: [grown] },
+        },
+        isRealFootprint: true,
+      };
+    }
+
+    // Fallback only if the footprint file can't be reached: a deterministic placeholder ring.
+    const RADIUS_DEG = 0.0016;
+    const POINTS = 20;
+    const ring: [number, number][] = [];
+    for (let i = 0; i < POINTS; i++) {
+      const angle = (i / POINTS) * Math.PI * 2;
+      ring.push([
+        quarry.lng + (RADIUS_DEG * Math.cos(angle)) / Math.cos((quarry.lat * Math.PI) / 180),
+        quarry.lat + RADIUS_DEG * Math.sin(angle),
+      ]);
+    }
+    ring.push(ring[0]);
+    const grown = ring.map(([lng, lat]) => [
+      quarry.lng + (lng - quarry.lng) * growth,
+      quarry.lat + (lat - quarry.lat) * growth,
+    ]);
 
     return {
-      lease: { type: "Feature" as const, geometry: { type: "Polygon" as const, coordinates: [leaseCoords] } },
-      ai: { type: "Feature" as const, geometry: { type: "Polygon" as const, coordinates: [aiCoords] } }
+      lease: { type: "Feature" as const, properties: {}, geometry: { type: "Polygon" as const, coordinates: [ring] } },
+      ai: { type: "Feature" as const, properties: {}, geometry: { type: "Polygon" as const, coordinates: [grown] } },
+      isRealFootprint: false,
     };
+  }, [quarry, anomalyData, siteFeature]);
+
+  /** Frames the pit; also re-run when the route id changes so the map never shows a stale location. */
+  const focusQuarry = useCallback(
+    (duration: number) => {
+      if (!quarry) return;
+      const map = mapRef.current;
+      if (!map) return;
+
+      // Frame the mapped pit itself where we have its outline, so the whole working is visible
+      // regardless of how big the site is.
+      const ring: [number, number][] | undefined = siteFeature?.geometry?.coordinates?.[0];
+      if (ring?.length) {
+        const lngs = ring.map((c) => c[0]);
+        const lats = ring.map((c) => c[1]);
+        map.fitBounds(
+          [
+            [Math.min(...lngs), Math.min(...lats)],
+            [Math.max(...lngs), Math.max(...lats)],
+          ],
+          { padding: 80, maxZoom: 17, duration }
+        );
+        return;
+      }
+      map.flyTo({ center: [quarry.lng, quarry.lat], zoom: 15.5, duration, essential: true });
+    },
+    [quarry, siteFeature]
+  );
+
+  useEffect(() => {
+    focusQuarry(900);
+  }, [focusQuarry]);
+
+  /**
+   * Actions recorded in this session. A real deployment would POST these to the case file; the
+   * prototype keeps them in component state so the flow can be demonstrated end to end.
+   */
+  const [actionLog, setActionLog] = useState<{ label: string; at: string }[]>([]);
+  const [isNoticeOpen, setNoticeOpen] = useState(false);
+  const [hasCopiedNotice, setCopiedNotice] = useState(false);
+
+  // Clear the log when the route moves to a different quarry.
+  useEffect(() => {
+    setActionLog([]);
+    setNoticeOpen(false);
+  }, [id]);
+
+  const isActionDone = useCallback(
+    (label: string) => actionLog.some((entry) => entry.label === label),
+    [actionLog]
+  );
+
+  const recordAction = useCallback((label: string) => {
+    setActionLog((log) =>
+      log.some((entry) => entry.label === label)
+        ? log
+        : [
+          {
+            label,
+            at: new Date().toLocaleString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          },
+          ...log,
+        ]
+    );
+  }, []);
+
+  const copyNotice = useCallback(() => {
+    if (!anomalyData) return;
+    navigator.clipboard
+      ?.writeText(anomalyData.draftNotice)
+      .then(() => {
+        setCopiedNotice(true);
+        setTimeout(() => setCopiedNotice(false), 1800);
+      })
+      .catch(() => setCopiedNotice(false));
+  }, [anomalyData]);
+
+  const copyCoords = useCallback(() => {
+    if (!quarry) return;
+    navigator.clipboard
+      ?.writeText(`${quarry.lat.toFixed(6)}, ${quarry.lng.toFixed(6)}`)
+      .then(() => {
+        setCopiedCoords(true);
+        setTimeout(() => setCopiedCoords(false), 1800);
+      })
+      .catch(() => setCopiedCoords(false));
   }, [quarry]);
 
-  if (!quarry || !anomalyData) {
+  if (isResolved && !quarry) {
+    // Unknown id (bad link, deleted record) — say so instead of spinning forever.
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-900"></div>
+      <div className="flex h-full items-center justify-center p-8">
+        <div className="surface-card max-w-md p-8 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-subtle text-neutral-ink/40">
+            <SearchX className="h-6 w-6" />
+          </span>
+          <h1 className="mt-4 font-heading text-xl font-extrabold text-brand-900">
+            Anomaly record not found
+          </h1>
+          <p className="mt-2 text-sm text-neutral-ink/60">
+            No quarry matches <span className="font-mono text-brand-900">{id}</span>. It may have been
+            re-indexed since this link was shared.
+          </p>
+          <Link
+            to="/anomaly-detection"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to anomaly detection
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const chartData = [
-    {
-      name: "Current Month",
-      "Declared Vol": quarry.declaredExtractionVolumeM3Monthly,
-      "AI Vol": quarry.aiEstimatedExtractionVolumeM3Monthly,
-    }
-  ];
+  if (!quarry || !anomalyData) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-brand-900" />
+      </div>
+    );
+  }
 
-  const gapPercentage = ((anomalyData.gapM3 / quarry.declaredExtractionVolumeM3Monthly) * 100).toFixed(1);
+
+  const gapPercentage = quarry.declaredExtractionVolumeM3Monthly
+    ? ((anomalyData.gapM3 / quarry.declaredExtractionVolumeM3Monthly) * 100).toFixed(1)
+    : "—";
+  // Width of the declared portion of the volume bar; the remainder is the AI-observed excess.
+  const declaredShare = quarry.aiEstimatedExtractionVolumeM3Monthly
+    ? (quarry.declaredExtractionVolumeM3Monthly / quarry.aiEstimatedExtractionVolumeM3Monthly) * 100
+    : 100;
+
+  const severityStyle =
+    anomalyData.severity === "High"
+      ? "bg-status-violation/10 text-red-700 ring-status-violation/25"
+      : anomalyData.severity === "Medium"
+        ? "bg-status-warning/10 text-amber-700 ring-status-warning/30"
+        : "bg-neutral-subtle text-neutral-ink/60 ring-neutral-border";
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 border-b border-neutral-border pb-6">
-        <div className="flex items-start gap-4">
-          <Link to="/anomaly-detection" className="mt-1 flex items-center justify-center w-10 h-10 rounded-full bg-white border border-neutral-border hover:bg-neutral-50 text-neutral-ink/70 transition-colors shadow-sm shrink-0">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-bold text-brand-900">{quarry.name}</h1>
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${
-                anomalyData.severity === "High" ? "bg-red-50 text-red-700 border-red-200" :
-                anomalyData.severity === "Medium" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                "bg-amber-50 text-amber-700 border-amber-200"
-              }`}>
-                <AlertTriangle className="w-3.5 h-3.5" />
-                {anomalyData.severity} Severity Anomaly
-              </span>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-neutral-ink/70">
-              <div className="flex items-center gap-1.5 font-medium">
-                <MapPin className="w-4 h-4 text-brand-500" />
-                {quarry.district} District
-              </div>
-              <div className="flex items-center gap-1.5">
-                <FileDigit className="w-4 h-4 text-neutral-ink/40" />
-                License: <span className="font-semibold text-brand-900">{quarry.licenseId}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <User className="w-4 h-4 text-neutral-ink/40" />
-                Operator: <span className="font-semibold text-brand-900">{quarry.operatorId}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-neutral-ink/40" />
-                Mineral: <span className="font-semibold text-brand-900">{quarry.mineralType}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-           <button className="flex items-center gap-2 px-4 py-2 bg-brand-900 hover:bg-brand-800 text-white rounded-lg text-sm font-semibold transition-colors shadow-md">
-            <FileText className="w-4 h-4" />
-            Issue Notice
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left Column: Metrics & Map */}
-        <div className="xl:col-span-2 space-y-6">
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-blue-50/50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-              <h3 className="text-sm font-semibold text-neutral-ink/60 uppercase tracking-wide mb-1">Declared Volume</h3>
-              <p className="text-2xl font-bold text-brand-900">{quarry.declaredExtractionVolumeM3Monthly.toLocaleString()} <span className="text-sm font-semibold text-neutral-ink/50">m³</span></p>
-            </div>
-            
-            <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50/50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-sm font-semibold text-neutral-ink/60 uppercase tracking-wide">AI Volumetric Gap</h3>
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+    <div className="mx-auto max-w-7xl space-y-5 p-4 md:p-6">
+      {/* Case header */}
+      <header className="surface-card p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 items-start gap-3.5">
+            <Link
+              to="/anomaly-detection"
+              aria-label="Back to anomaly detection"
+              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-surface text-neutral-ink/60 ring-1 ring-inset ring-neutral-border transition-colors hover:text-brand-900 hover:ring-brand-200"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="font-heading text-xl font-extrabold text-brand-900 md:text-2xl">
+                  {quarry.name}
+                </h1>
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ring-1 ring-inset ${severityStyle}`}
+                >
+                  <AlertTriangle className="h-3 w-3" />
+                  {anomalyData.severity} severity
                 </span>
               </div>
-              <p className="text-2xl font-bold text-amber-600">+{Math.round(anomalyData.gapTonnes).toLocaleString()} <span className="text-sm font-semibold text-amber-500/70">tonnes</span></p>
-              <p className="text-xs font-semibold text-amber-600/80 mt-1">({gapPercentage}% deviation)</p>
-            </div>
-
-            <div className="bg-red-50 border border-red-100 rounded-xl p-5 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <AlertTriangle className="w-16 h-16 text-red-600" />
-              </div>
-              <div className="relative z-10">
-                <h3 className="text-sm font-semibold text-red-700 uppercase tracking-wide mb-1">Estimated Revenue Loss</h3>
-                <p className="text-2xl font-bold text-red-700">{formatINR(anomalyData.revenueLoss)}</p>
-                <p className="text-xs font-semibold text-red-600/80 mt-1">Pending Seigniorage Collection</p>
-              </div>
+              <dl className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-neutral-ink/60">
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-brand-500" />
+                  {quarry.district}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <FileDigit className="h-3.5 w-3.5 text-neutral-ink/35" />
+                  <span className="font-semibold text-brand-900">{quarry.licenseId}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5 text-neutral-ink/35" />
+                  <span className="font-semibold text-brand-900">{quarry.operatorId}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5 text-neutral-ink/35" />
+                  <span className="font-semibold text-brand-900">{quarry.mineralType}</span>
+                </div>
+              </dl>
             </div>
           </div>
 
-          {/* Interactive GIS Map */}
-          <div className="bg-white border border-neutral-border rounded-xl shadow-sm overflow-hidden flex flex-col h-[500px]">
-            <div className="px-6 py-4 border-b border-neutral-border flex items-center justify-between bg-neutral-surface">
-              <div>
-                <h3 className="text-lg font-bold text-brand-900 flex items-center gap-2">
-                  <Crosshair className="w-5 h-5 text-brand-500" />
-                  Live Spatial Analysis
+          <button
+            onClick={() => recordAction("Show-cause notice issued")}
+            disabled={isActionDone("Show-cause notice issued")}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-linear-to-b from-brand-700 to-brand-900 px-4 py-2.5 text-sm font-semibold text-white shadow-card ring-1 ring-inset ring-white/15 transition-all hover:from-brand-600 hover:to-brand-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isActionDone("Show-cause notice issued") ? (
+              <>
+                <Check className="h-4 w-4" /> Notice issued
+              </>
+            ) : (
+              <>
+                <FileText className="h-4 w-4" /> Issue notice
+              </>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {/* Evidence: the four numbers the case turns on */}
+      <section className="surface-card p-5">
+        <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+          <Metric
+            label="Declared volume"
+            value={`${quarry.declaredExtractionVolumeM3Monthly.toLocaleString("en-IN")} m³`}
+            hint="Operator monthly return"
+          />
+          <Metric
+            label="AI estimated"
+            value={`${quarry.aiEstimatedExtractionVolumeM3Monthly.toLocaleString("en-IN")} m³`}
+            hint="From satellite volumetrics"
+            tone="text-amber-600"
+          />
+          <Metric
+            label="Excess extraction"
+            value={`+${formatQuantityCompact(anomalyData.gapTonnes, "t")}`}
+            valueTitle={`${Math.round(anomalyData.gapTonnes).toLocaleString("en-IN")} tonnes`}
+            hint={`${gapPercentage}% above declared`}
+            tone="text-status-violation"
+          />
+          <Metric
+            label="Revenue at risk"
+            value={formatINRCompact(anomalyData.revenueLoss)}
+            valueTitle={formatINR(anomalyData.revenueLoss)}
+            hint="Unpaid seigniorage this month"
+            tone="text-status-violation"
+          />
+        </div>
+
+        {/* Proportional bar: declared vs the AI-observed excess */}
+        <div className="mt-5">
+          <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-neutral-subtle">
+            <div className="bg-brand-500" style={{ width: `${declaredShare}%` }} />
+            <div className="bg-status-violation" style={{ width: `${100 - declaredShare}%` }} />
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[11px] font-semibold uppercase tracking-widest text-neutral-ink/45">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-brand-500" /> Declared
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-status-violation" /> Undeclared excess
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        {/* Primary evidence: the pit itself */}
+        <div className="space-y-5 xl:col-span-2">
+          <div className="surface-card flex h-[520px] flex-col overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-line bg-neutral-subtle/60 px-5 py-4">
+              <div className="min-w-0">
+                <h3 className="flex items-center gap-2 font-heading text-[15px] font-bold text-brand-900">
+                  <Crosshair className="h-4 w-4 text-brand-500" />
+                  Site evidence
                 </h3>
-                <p className="text-sm text-neutral-ink/60 mt-0.5">Coordinates: {quarry.lat.toFixed(6)}° N, {quarry.lng.toFixed(6)}° E</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={copyCoords}
+                    title="Copy coordinates"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-border bg-neutral-surface px-2 py-1 font-mono text-xs text-neutral-ink/70 transition-colors hover:border-brand-200 hover:text-brand-900"
+                  >
+                    {quarry.lat.toFixed(6)}, {quarry.lng.toFixed(6)}
+                    {hasCopiedCoords ? (
+                      <Check className="h-3.5 w-3.5 text-status-compliant" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 text-neutral-ink/40" />
+                    )}
+                  </button>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-border bg-neutral-surface px-2 py-1 text-[11px] font-bold uppercase tracking-widest text-neutral-ink/60">
+                    <Layers className="h-3.5 w-3.5" />
+                    {(quarry.siteAreaSqM / 10000).toFixed(1)} ha pit
+                  </span>
+                  <button
+                    onClick={() => focusQuarry(700)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-border bg-neutral-surface px-2 py-1 text-[11px] font-bold uppercase tracking-widest text-neutral-ink/60 transition-colors hover:border-brand-200 hover:text-brand-900"
+                  >
+                    <Locate className="h-3.5 w-3.5" />
+                    Recentre
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-4">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-ink/70">
-                  <div className="w-3 h-3 rounded-full border-2 border-emerald-500 bg-emerald-500/10"></div>
-                  Approved Lease
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-ink/70">
-                  <div className="w-3 h-3 rounded-full border-2 border-red-500 border-dashed bg-red-500/20"></div>
-                  AI Extent
-                </div>
+              <div className="flex flex-wrap gap-4">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-neutral-ink/70">
+                  <span className="h-3 w-3 rounded-full border-2 border-emerald-500 bg-emerald-500/10" />
+                  Mapped pit outline
+                </span>
+                <span className="flex items-center gap-1.5 text-xs font-bold text-neutral-ink/70">
+                  <span className="h-3 w-3 rounded-full border-2 border-dashed border-red-500 bg-red-500/20" />
+                  AI extent (+{gapPercentage}%)
+                </span>
               </div>
             </div>
-            
-            <div className="relative flex-1 w-full bg-slate-100">
+
+            <div className="relative w-full flex-1 bg-canvas-deep">
               <Map
-                initialViewState={{
-                  longitude: quarry.lng,
-                  latitude: quarry.lat,
-                  zoom: 15.5,
-                  pitch: 45
-                }}
+                ref={mapRef}
+                initialViewState={{ longitude: quarry.lng, latitude: quarry.lat, zoom: 15.5 }}
                 mapStyle={SATELLITE_STYLE}
-                interactive={true}
-                attributionControl={false}
+                interactive
+                attributionControl={{ compact: true }}
               >
                 <NavigationControl position="top-right" />
                 <FullscreenControl position="top-right" />
-                
+                <ScaleControl position="top-left" maxWidth={110} unit="metric" />
+
                 {mapPolygons && (
                   <>
                     <Source id="approved-lease" type="geojson" data={mapPolygons.lease as any}>
                       <Layer
                         id="approved-fill"
                         type="fill"
-                        paint={{ "fill-color": "rgba(34, 197, 94, 0.15)" }}
+                        paint={{ "fill-color": "rgba(16, 185, 129, 0.15)" }}
                       />
                       <Layer
                         id="approved-line"
                         type="line"
-                        paint={{ "line-color": "#22c55e", "line-width": 2 }}
+                        paint={{ "line-color": "#10b981", "line-width": 2 }}
                       />
                     </Source>
-                    
+
                     <Source id="ai-extent" type="geojson" data={mapPolygons.ai as any}>
                       <Layer
                         id="ai-fill"
                         type="fill"
-                        paint={{ "fill-color": "rgba(239, 68, 68, 0.2)" }}
+                        paint={{ "fill-color": "rgba(239, 68, 68, 0.18)" }}
                       />
                       <Layer
                         id="ai-line"
                         type="line"
-                        paint={{ "line-color": "#ef4444", "line-width": 2, "line-dasharray": [2, 2] }}
+                        paint={{
+                          "line-color": "#ef4444",
+                          "line-width": 2,
+                          "line-dasharray": [2, 2],
+                        }}
                       />
                     </Source>
 
-                    {/* Center point marker */}
-                    <Source id="quarry-center-source" type="geojson" data={{
-                      type: "Feature",
-                      geometry: { type: "Point", coordinates: [quarry.lng, quarry.lat] },
-                      properties: {}
-                    }}>
+                    <Source
+                      id="quarry-center-source"
+                      type="geojson"
+                      data={{
+                        type: "Feature",
+                        geometry: { type: "Point", coordinates: [quarry.lng, quarry.lat] },
+                        properties: {},
+                      }}
+                    >
                       <Layer
                         id="quarry-center"
                         type="circle"
                         paint={{
-                          "circle-radius": 4,
+                          "circle-radius": 5,
                           "circle-color": "#ffffff",
                           "circle-stroke-width": 2,
-                          "circle-stroke-color": "#000000"
+                          "circle-stroke-color": "#1b1a4e",
                         }}
                       />
                     </Source>
@@ -303,104 +556,169 @@ export function AnomalyDetailPage() {
               </Map>
             </div>
           </div>
-        </div>
 
-        {/* Right Column: Analytics & Actions */}
-        <div className="space-y-6">
-          
-          {/* Claude AI Insight */}
-          <div className="bg-indigo-50 border border-indigo-100 rounded-xl shadow-sm overflow-hidden relative">
-            <div className="absolute -right-4 -top-4 opacity-5 pointer-events-none">
-              <Activity className="w-32 h-32 text-indigo-700" />
-            </div>
-            <div className="px-5 py-4 flex items-center gap-3 border-b border-indigo-100/60">
-              <div className="p-2 bg-indigo-600 rounded-lg shadow-sm">
-                <Activity className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-indigo-900 leading-tight">AI Diagnostic Insight</h3>
-                <p className="text-[10px] font-bold text-indigo-600/70 uppercase tracking-widest mt-0.5">Confidence: 94%</p>
-              </div>
-            </div>
-            <div className="p-5 relative z-10">
-              <div className="bg-white/60 rounded-lg p-4 border border-indigo-100/50 shadow-sm backdrop-blur-sm">
-                <p className="text-sm text-slate-800 leading-relaxed font-medium">
-                  {anomalyData.explanation.english}
-                </p>
-                <div className="my-4 h-px bg-indigo-100/60"></div>
-                <p className="text-sm text-slate-700 leading-relaxed font-sans font-medium">
-                  {anomalyData.explanation.tamil}
-                </p>
-              </div>
-            </div>
-          </div>
-
-           {/* Volume Chart */}
-           <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
-            <h3 className="font-bold text-brand-900 mb-4">Volumetric Analysis</h3>
-            <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barGap={8}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" vertical={false} />
-                  <XAxis dataKey="name" stroke="#a3a3a3" tick={{ fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} />
-                  <YAxis stroke="#a3a3a3" tick={{ fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#fff', borderColor: '#e5e5e5', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 600 }}
-                    cursor={{ fill: '#f5f5f5' }}
+          {/* Draft notice — long, so it stays folded until wanted */}
+          <div className="surface-card overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-line bg-neutral-subtle/60 px-5 py-4">
+              <h3 className="flex items-center gap-2 font-heading text-[15px] font-bold text-brand-900">
+                <FileText className="h-4 w-4 text-brand-500" />
+                System-generated show-cause notice
+                <span className="rounded-md bg-neutral-surface px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-neutral-ink/50 ring-1 ring-inset ring-neutral-border">
+                  Draft
+                </span>
+              </h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={copyNotice}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-border bg-neutral-surface px-3 py-1.5 text-xs font-bold text-neutral-ink/70 transition-colors hover:border-brand-200 hover:text-brand-900"
+                >
+                  {hasCopiedNotice ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-status-compliant" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" /> Copy
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setNoticeOpen((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-border bg-neutral-surface px-3 py-1.5 text-xs font-bold text-neutral-ink/70 transition-colors hover:border-brand-200 hover:text-brand-900"
+                >
+                  {isNoticeOpen ? "Hide" : "Review"}
+                  <ChevronRight
+                    className={`h-3.5 w-3.5 transition-transform ${isNoticeOpen ? "rotate-90" : ""}`}
                   />
-                  <Bar dataKey="Declared Vol" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  <Bar dataKey="AI Vol" fill="#f97316" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
+                </button>
+              </div>
+            </div>
+            {isNoticeOpen && (
+              <div className="animate-fade-in bg-neutral-subtle/40 p-5">
+                <pre className="max-h-80 overflow-y-auto whitespace-pre-wrap rounded-xl border border-neutral-border bg-neutral-surface p-5 font-mono text-[13px] leading-relaxed text-neutral-ink/80">
+                  {anomalyData.draftNotice}
+                </pre>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right rail: interpretation + what to do about it */}
+        <div className="space-y-5">
+          <div className="surface-card overflow-hidden">
+            <div className="flex items-center gap-3 border-b border-neutral-line bg-brand-50/60 px-5 py-4">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-500 to-brand-800 text-white">
+                <Activity className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="font-heading text-[15px] font-bold text-brand-900">
+                  AI diagnostic insight
+                </h3>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">
+                  Confidence 94%
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3 p-5 text-sm leading-relaxed text-neutral-ink/75">
+              <p>{anomalyData.explanation.english}</p>
+              <div className="h-px bg-neutral-line" />
+              <p>{anomalyData.explanation.tamil}</p>
             </div>
           </div>
 
-          {/* Action Center */}
-          <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
-            <h3 className="font-bold text-brand-900 mb-3">Enforcement Actions</h3>
-            <div className="space-y-2">
-              <button className="w-full flex items-center justify-between p-3 bg-white hover:bg-neutral-50 text-brand-900 rounded-lg transition-colors border border-neutral-border shadow-sm group">
-                <span className="flex items-center gap-2.5 font-bold text-sm">
-                  <Send className="w-4 h-4 text-brand-500" />
-                  Dispatch Ground Inspector
-                </span>
-                <ChevronRight className="w-4 h-4 text-neutral-ink/40 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
-              </button>
-              <button className="w-full flex items-center justify-between p-3 bg-white hover:bg-red-50 text-red-700 rounded-lg transition-colors border border-neutral-border hover:border-red-200 shadow-sm group">
-                <span className="flex items-center gap-2.5 font-bold text-sm">
-                  <ShieldAlert className="w-4 h-4 text-red-500" />
-                  Escalate to District Collector
-                </span>
-                <ChevronRight className="w-4 h-4 text-neutral-ink/40 group-hover:text-red-500 group-hover:translate-x-1 transition-all" />
-              </button>
+          <div className="surface-card overflow-hidden">
+            <div className="border-b border-neutral-line px-5 py-4">
+              <h3 className="font-heading text-[15px] font-bold text-brand-900">
+                Enforcement actions
+              </h3>
+              <p className="mt-0.5 text-xs text-neutral-ink/50">Recorded against case {quarry.id}</p>
+            </div>
+
+            <div className="space-y-2 p-4">
+              {ENFORCEMENT_ACTIONS.map((action) => {
+                const done = isActionDone(action.label);
+                const Icon = action.icon;
+                return (
+                  <button
+                    key={action.label}
+                    onClick={() => recordAction(action.label)}
+                    disabled={done}
+                    className={`group flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-3 text-left transition-all ${done
+                      ? "border-status-compliant/30 bg-status-compliant/5"
+                      : "border-neutral-border bg-neutral-surface hover:border-brand-200 hover:bg-brand-50/40"
+                      }`}
+                  >
+                    <span className="flex items-center gap-2.5 text-sm font-semibold text-brand-900">
+                      <Icon className={`h-4 w-4 ${done ? "text-status-compliant" : action.tone}`} />
+                      {action.label}
+                    </span>
+                    {done ? (
+                      <Check className="h-4 w-4 shrink-0 text-status-compliant" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0 text-neutral-ink/30 transition-transform group-hover:translate-x-0.5" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-neutral-line bg-neutral-subtle/50 px-5 py-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-ink/45">
+                Case activity
+              </p>
+              {actionLog.length === 0 ? (
+                <p className="mt-2 text-xs text-neutral-ink/50">
+                  No action recorded yet. Actions taken here are logged against the case file.
+                </p>
+              ) : (
+                <ol className="mt-3 space-y-3">
+                  {actionLog.map((entry) => (
+                    <li key={entry.label} className="flex gap-3">
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-status-compliant ring-4 ring-status-compliant/15" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-brand-900">{entry.label}</p>
+                        <p className="text-[11px] text-neutral-ink/45">
+                          {entry.at} · District Officer, Enforcement Cell
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </div>
           </div>
         </div>
       </div>
-      
-      {/* Draft Notice Section */}
-      <div className="bg-white border border-neutral-border rounded-xl overflow-hidden shadow-sm mt-6">
-        <div className="bg-neutral-surface px-6 py-4 border-b border-neutral-border flex items-center justify-between">
-           <h3 className="font-bold text-brand-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-brand-500" />
-            System-Generated Show-Cause Notice
-          </h3>
-          <span className="bg-white border border-neutral-border px-2.5 py-1 rounded-md text-[10px] font-bold text-neutral-ink/60 uppercase tracking-wider">Draft Mode</span>
-        </div>
-        <div className="p-6 bg-slate-50 border-b border-neutral-border">
-          <div className="bg-white p-6 rounded-lg border border-slate-200 font-mono text-sm text-slate-800 whitespace-pre-wrap leading-relaxed shadow-sm">
-            {anomalyData.draftNotice}
-          </div>
-        </div>
-        <div className="px-6 py-4 bg-white flex justify-end gap-3">
-          <button className="px-5 py-2 bg-white border border-neutral-border hover:bg-neutral-50 text-neutral-ink rounded-lg text-sm font-bold transition-colors shadow-sm">
-            Edit Document
-          </button>
-          <button className="px-5 py-2 bg-brand-900 hover:bg-brand-800 text-white rounded-lg text-sm font-bold transition-colors shadow-sm">
-            Copy to Clipboard
-          </button>
-        </div>
-      </div>
+    </div>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  hint,
+  tone = "text-brand-900",
+  valueTitle,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  tone?: string;
+  /** Exact figure on hover, for values shortened to lakh/crore. */
+  valueTitle?: string;
+}) {
+  return (
+    <div>
+      <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-neutral-ink/45">
+        {label}
+      </p>
+      <p
+        title={valueTitle}
+        className={`mt-2 font-heading text-[1.45rem] font-extrabold leading-none tabular-nums ${tone}`}
+      >
+        {value}
+      </p>
+      <p className="mt-1.5 text-xs text-neutral-ink/50">{hint}</p>
     </div>
   );
 }

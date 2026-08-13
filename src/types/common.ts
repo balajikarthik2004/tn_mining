@@ -38,7 +38,7 @@ export type District =
   | "Tirupathur"
   | "Tiruppur"
   | "Tiruvannamalai"
-  | "Tuticorin"
+  | "Thoothukudi"
   | "Vellore"
   | "Villupuram"
   | "Virudhunagar";
@@ -78,7 +78,7 @@ export const DISTRICTS: District[] = [
   "Tirupathur",
   "Tiruppur",
   "Tiruvannamalai",
-  "Tuticorin",
+  "Thoothukudi",
   "Vellore",
   "Villupuram",
   "Virudhunagar",

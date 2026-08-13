@@ -32,7 +32,7 @@
   Tirupathur: { lat: 12.584, lng: 78.663, jitter: 0.07 },
   Tiruppur: { lat: 10.791, lng: 77.469, jitter: 0.07 },
   Tiruvannamalai: { lat: 12.43, lng: 79.193, jitter: 0.026 },
-  Tuticorin: { lat: 8.847, lng: 78.029, jitter: 0.07 },
+  Thoothukudi: { lat: 8.847, lng: 78.029, jitter: 0.07 },
   Vellore: { lat: 12.904, lng: 78.896, jitter: 0.008 },
   Villupuram: { lat: 12.125, lng: 79.586, jitter: 0.07 },
   Virudhunagar: { lat: 9.493, lng: 77.886, jitter: 0.07 },

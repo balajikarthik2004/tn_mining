@@ -1,4 +1,4 @@
-import type { MineralType } from "./common";
+import type { District, MineralType } from "./common";
 
 export type EPermitStatus = "Active" | "Exhausted" | "Expired" | "Revoked";
 export type ScanResultType = "Valid" | "Invalid";
@@ -6,8 +6,10 @@ export type InvalidReason = "Forged" | "Expired" | "Quantity Exceeded" | "Revoke
 
 export interface EPermit {
   id: string;
+  /** Links to the real quarry record in generateMockData — names/minerals must agree with it. */
   quarryId: string;
   quarryName: string;
+  district: District;
   operatorName: string;
   mineralType: MineralType;
   validFrom: string; // ISO
@@ -15,7 +17,6 @@ export interface EPermit {
   authorizedQuantityTonnes: number;
   utilizedQuantityTonnes: number;
   status: EPermitStatus;
-  issueTimestamp: string; // ISO
 }
 
 export interface ScanEvent {
@@ -30,4 +31,6 @@ export interface ScanEvent {
   };
   result: ScanResultType;
   invalidReason?: InvalidReason;
+  /** Quarry the scanned pass belongs to; absent for forged passes with no matching record. */
+  quarryName?: string;
 }

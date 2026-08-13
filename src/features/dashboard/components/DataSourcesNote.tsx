@@ -45,7 +45,20 @@ export function DataSourcesNote() {
                 </a>
                 .
               </li>
-              <li>District town locations, used to scatter demo quarries plausibly on the map.</li>
+              <li>
+                Quarry <strong>locations and pit outlines</strong> — real working sites, from{" "}
+                <a
+                  href="https://www.openstreetmap.org/copyright"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand-700 underline"
+                >
+                  OpenStreetMap
+                </a>{" "}
+                <code className="rounded bg-brand-50 px-1 py-0.5 text-xs">landuse=quarry</code> polygons
+                (ODbL), with their mapped surface area. Each demo record is placed on one of these, so
+                coordinates and footprints on the maps are genuine.
+              </li>
             </ul>
           </div>
           <div>
@@ -56,6 +69,11 @@ export function DataSourcesNote() {
               not real regulatory findings about any real company. This is a frontend prototype with no
               live backend; see <code className="rounded bg-brand-50 px-1 py-0.5 text-xs">BUILD_PROMPT.md</code> for
               the full spec.
+            </p>
+            <p className="mt-2 rounded-lg bg-gold-50 p-2.5 text-neutral-ink/80 ring-1 ring-inset ring-gold-300/50">
+              <strong>Important:</strong> because the demo records sit on real quarry sites, the
+              compliance status, volumes and penalties shown against a location are invented and say
+              nothing about whoever actually operates that site.
             </p>
           </div>
         </div>

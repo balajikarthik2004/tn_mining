@@ -4,8 +4,16 @@ export interface Quarry {
   id: string;
   name: string;
   district: District;
+  /** Real pit centroid — see data/mock/quarrySites.ts. */
   lat: number;
   lng: number;
+  /**
+   * Id of the real, mapped quarry site this demo record sits on. The matching pit outline is in
+   * `public/geo/quarry-sites.geojson`, which detail maps load to draw the actual footprint.
+   */
+  siteId: string;
+  /** Mapped surface area of that pit in square metres (real, from OpenStreetMap). */
+  siteAreaSqM: number;
   mineralType: MineralType;
   status: QuarryStatus;
   operatorId: string;

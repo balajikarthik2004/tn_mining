@@ -67,7 +67,7 @@ const DISTRICT_NAME_EXPR: any = [
 ];
 
 /** Frames the whole state — used on first load and whenever the district filter is cleared. */
-function frameTamilNadu(map: Pick<MapRef, "fitBounds">, duration: number) {
+function frameTamilNadu(map: { fitBounds: MapRef["fitBounds"] }, duration: number) {
   map.fitBounds(
     [
       [TN_BOUNDS.minLng, TN_BOUNDS.minLat],
@@ -235,10 +235,6 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
       <Map
         ref={mapRef}
         initialViewState={{ longitude: TN_CENTER.lng, latitude: TN_CENTER.lat, zoom: 6.0 }}
-        maxBounds={[
-          [TN_BOUNDS.minLng - 0.6, TN_BOUNDS.minLat - 0.6], // South West
-          [TN_BOUNDS.maxLng + 0.6, TN_BOUNDS.maxLat + 0.6], // North East
-        ] as any}
         style={{ width: "100%", height: "100%" }}
         mapStyle={BASEMAP_STYLE_URL}
         interactiveLayerIds={[CLUSTER_LAYER, UNCLUSTERED_LAYER, "tn-district-fill"]}
@@ -247,11 +243,20 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
         onMouseLeave={() => setHoveredDistrict(null)}
         onLoad={(e) => {
           setIsStyleLoaded(true);
-          // Fill the frame with Tamil Nadu rather than a fixed zoom that leaves the state off-centre,
-          // then make that the furthest-out the map can go — the scale bar reads ~100 km there, and
-          // zooming further out would only reveal masked-off neighbouring states.
-          frameTamilNadu(e.target, 0);
-          e.target.setMinZoom(e.target.getZoom());
+          const map = e.target;
+          // One frame later, so the fit is computed against the settled container size — fitting
+          // during `load` uses a stale (taller) size and leaves the state cropped and over-zoomed.
+          requestAnimationFrame(() => {
+            map.resize();
+            // Fill the frame with Tamil Nadu, then pin that as the furthest-out view: the scale bar
+            // reads 100 km there, and zooming out further would only reveal the masked-off
+            // neighbouring states. maxBounds is applied *after* the fit and derived from it — set
+            // up-front it makes MapLibre zoom IN to keep a wide viewport inside the box, which
+            // overrides the state-wide framing.
+            frameTamilNadu(map, 0);
+            map.setMinZoom(map.getZoom());
+            map.setMaxBounds(map.getBounds());
+          });
         }}
         cursor={hovered || hoveredDistrict ? "pointer" : "grab"}
         attributionControl={{ compact: true }}

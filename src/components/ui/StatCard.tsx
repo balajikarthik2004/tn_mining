@@ -5,37 +5,55 @@ export type StatCardAccent = "brand" | "compliant" | "warning" | "violation" | "
 
 const ACCENT_STYLES: Record<
   StatCardAccent,
-  { tile: string; glow: string; ring: string }
+  { tile: string; glow: string; ring: string; rule: string; value: string; progress: string }
 > = {
   brand: {
     tile: "bg-linear-to-br from-brand-500 to-brand-800 text-white",
     glow: "bg-brand-500/15",
     ring: "group-hover:ring-brand-200",
+    rule: "via-brand-400/70",
+    value: "text-brand-900",
+    progress: "[--progress-color:var(--color-brand-500)]",
   },
   compliant: {
     tile: "bg-linear-to-br from-emerald-400 to-emerald-600 text-white",
     glow: "bg-status-compliant/15",
     ring: "group-hover:ring-emerald-200",
+    rule: "via-emerald-400/70",
+    value: "text-emerald-700",
+    progress: "[--progress-color:var(--color-status-compliant)]",
   },
   warning: {
     tile: "bg-linear-to-br from-amber-400 to-amber-600 text-white",
     glow: "bg-status-warning/15",
     ring: "group-hover:ring-amber-200",
+    rule: "via-amber-400/70",
+    value: "text-amber-700",
+    progress: "[--progress-color:var(--color-status-warning)]",
   },
   violation: {
     tile: "bg-linear-to-br from-red-400 to-red-600 text-white",
-    glow: "bg-status-violation/15",
+    glow: "bg-status-violation/18",
     ring: "group-hover:ring-red-200",
+    rule: "via-red-400/70",
+    value: "text-red-700",
+    progress: "[--progress-color:var(--color-status-violation)]",
   },
   expired: {
     tile: "bg-linear-to-br from-slate-400 to-slate-600 text-white",
     glow: "bg-status-expired/15",
     ring: "group-hover:ring-slate-300",
+    rule: "via-slate-400/70",
+    value: "text-neutral-ink/80",
+    progress: "[--progress-color:var(--color-status-expired)]",
   },
   gold: {
     tile: "bg-linear-to-br from-gold-300 to-gold-500 text-brand-950",
     glow: "bg-gold-400/20",
     ring: "group-hover:ring-gold-300",
+    rule: "via-gold-400/70",
+    value: "text-brand-900",
+    progress: "[--progress-color:var(--color-gold-500)]",
   },
 };
 
@@ -44,11 +62,19 @@ interface StatCardProps {
   value: string | number;
   icon: LucideIcon;
   accent?: StatCardAccent;
-  /** Optional secondary line under the value. */
+  /** Secondary line under the value. */
   hint?: string;
   trend?: { direction: "up" | "down"; label: string };
+  /** Draws attention to a card that needs action (tinted surface + accent rule). */
+  emphasis?: boolean;
+  /** Exact figure shown on hover when `value` is abbreviated (e.g. "₹1.52 cr"). */
+  valueTitle?: string;
 }
 
+/**
+ * The platform's single KPI tile. Every feature page's stat row uses this, so a metric looks and
+ * behaves the same everywhere — accent colours come from the status/brand tokens only.
+ */
 export function StatCard({
   label,
   value,
@@ -56,17 +82,30 @@ export function StatCard({
   accent = "brand",
   hint,
   trend,
+  emphasis = false,
+  valueTitle,
 }: StatCardProps) {
   const styles = ACCENT_STYLES[accent];
   const TrendIcon = trend?.direction === "up" ? TrendingUp : TrendingDown;
 
   return (
     <div
-      className={`group relative min-w-[10.5rem] flex-1 overflow-hidden rounded-2xl bg-neutral-surface p-5 shadow-card ring-1 ring-inset ring-neutral-border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover ${styles.ring}`}
+      className={`group hover-progress min-w-[10.5rem] flex-1 rounded-2xl p-5 shadow-card ring-1 ring-inset ring-neutral-border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover ${styles.ring} ${styles.progress} ${emphasis ? "bg-linear-to-b from-red-50/70 to-neutral-surface" : "bg-neutral-surface"
+        }`}
     >
-      {/* soft accent bloom in the corner */}
+      {/* accent rule along the top edge */}
       <span
-        className={`pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full blur-2xl transition-opacity duration-300 group-hover:opacity-90 ${styles.glow}`}
+        className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent ${styles.rule}`}
+        aria-hidden="true"
+      />
+      {/* soft accent bloom, warms up on hover */}
+      <span
+        className={`pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full blur-2xl transition-all duration-500 group-hover:scale-125 group-hover:opacity-90 ${styles.glow}`}
+        aria-hidden="true"
+      />
+      {/* sheen sweep on hover */}
+      <span
+        className="pointer-events-none absolute -inset-y-2 -left-1/3 w-1/3 -skew-x-12 bg-linear-to-r from-transparent via-white/45 to-transparent opacity-0 transition-all duration-700 group-hover:left-[110%] group-hover:opacity-100"
         aria-hidden="true"
       />
 
@@ -76,13 +115,16 @@ export function StatCard({
           {label}
         </p>
         <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm ${styles.tile}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 ring-inset ring-white/25 transition-transform duration-300 group-hover:scale-105 ${styles.tile}`}
         >
           <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </div>
       </div>
 
-      <p className="relative mt-3 font-heading text-[1.75rem] font-extrabold leading-none tracking-tight text-brand-900">
+      <p
+        title={valueTitle}
+        className={`relative mt-3 font-heading text-[1.75rem] font-extrabold leading-none tracking-tight tabular-nums ${styles.value}`}
+      >
         {value}
       </p>
 

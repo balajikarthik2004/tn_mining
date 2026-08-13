@@ -1,13 +1,14 @@
 import type { Quarry } from "../../types/quarry";
 import type { Operator } from "../../types/operator";
 import type { License, LicenseStatus, LicenseDocument, PaymentRecord, LinkedVehicle, LicenseRenewal } from "../../types/license";
-import { DISTRICTS, type MineralType, type QuarryStatus } from "../../types/common";
-import { DISTRICT_CENTERS } from "./districts";
+import { type MineralType, type QuarryStatus } from "../../types/common";
+import { QUARRY_SITES } from "./quarrySites";
 import { SEIGNIORAGE_FEE_PER_M3_INR } from "./officialRates";
 import { createSeededRandom, pick, pickWeighted, randomFloat, randomInt } from "./seededRandom";
 
 const SEED = 78412; // fixed seed -> stable demo dataset across refreshes/screenshots
-const QUARRY_COUNT = 72;
+/** One demo quarry per real mapped pit — see quarrySites.ts. */
+const QUARRY_COUNT = QUARRY_SITES.length;
 
 const MINERAL_WEIGHTS: { value: MineralType; weight: number }[] = [
   { value: "Sand", weight: 34 },
@@ -73,28 +74,6 @@ const INSPECTOR_NAMES = [
   "J. Muthu Kumar",
 ];
 
-/**
- * Real mining localities used to anchor a district's quarries somewhere plausible. Every entry is
- * checked to fall inside its own district under the present-day (38-district) boundaries — the
- * Chennai/Kanchipuram (Trisulam), Ariyalur (Dalavoi) and Thanjavur anchors were dropped or re-keyed
- * when the 2019-20 reorganisation moved those points into Chengalpattu / Perambalur / Pudukkottai.
- * Districts without an entry scatter around their interior point from DISTRICT_CENTERS instead.
- */
-const REAL_COORDINATES: Record<string, { lat: number; lng: number; spread: number }[]> = {
-  Madurai: [{ lat: 10.021, lng: 78.331, spread: 0.05 }], // Melur granite
-  Salem: [{ lat: 11.7122, lng: 78.1686, spread: 0.05 }], // Magnesite Chalk Hills
-  Tirunelveli: [{ lat: 8.805, lng: 77.731, spread: 0.05 }], // Sethurayanputhur Limestone
-  Coimbatore: [{ lat: 10.9, lng: 76.96, spread: 0.05 }], // Madukkarai
-  Dindigul: [{ lat: 10.355, lng: 77.965, spread: 0.05 }],
-  Karur: [{ lat: 10.984, lng: 77.887, spread: 0.028 }], // Thenilai Magnesite/Limestone
-  Villupuram: [{ lat: 11.93, lng: 79.48, spread: 0.042 }],
-  Vellore: [{ lat: 12.9, lng: 79.12, spread: 0.048 }],
-  Namakkal: [{ lat: 11.16, lng: 77.98, spread: 0.046 }],
-  Krishnagiri: [{ lat: 12.635, lng: 78.01, spread: 0.05 }],
-  Erode: [{ lat: 11.33, lng: 77.62, spread: 0.05 }],
-  Cuddalore: [{ lat: 11.562, lng: 79.505, spread: 0.05 }], // Neyveli Lignite
-};
-
 function toISODate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
@@ -121,16 +100,8 @@ function generateAll(): GeneratedData {
   const operators: Operator[] = [];
   const licenses: License[] = [];
 
-  // Give every district at least a couple of quarries, then fill the rest randomly
-  // so the district filter and map clustering both have meaningful variety.
-  // One quarry per district first, then fill the rest at random — with 38 districts, seeding two
-  // each would overrun QUARRY_COUNT and leave the tail districts empty.
-  const districtSequence: (typeof DISTRICTS)[number][] = [];
-  DISTRICTS.forEach((d) => districtSequence.push(d));
-  while (districtSequence.length < QUARRY_COUNT) {
-    districtSequence.push(pick(random, DISTRICTS));
-  }
-
+  // Every quarry sits on a real, mapped pit (OpenStreetMap landuse=quarry). The catalogue is
+  // pre-sorted and dealt round-robin across districts at build time, so this is a straight walk.
   let violationsToday = 0;
 
   for (let i = 0; i < QUARRY_COUNT; i++) {
@@ -139,22 +110,9 @@ function generateAll(): GeneratedData {
     const operatorId = `OP-${String(idNum).padStart(3, "0")}`;
     const licenseId = `LIC-${String(idNum).padStart(3, "0")}`;
 
-    const district = districtSequence[i];
-    const center = DISTRICT_CENTERS[district];
-    
-    // Every scatter radius is bounded by the distance from its anchor to the district edge, so a
-    // quarry always falls inside the district it is labelled with. (A tighter ±0.001° (~100 m)
-    // spread used to stack a district's quarries onto one pixel — they never separated on the map.)
-    let lat: number, lng: number;
-    const realCoords = REAL_COORDINATES[district];
-    if (realCoords && realCoords.length > 0) {
-      const coord = pick(random, realCoords);
-      lat = coord.lat + randomFloat(random, -coord.spread, coord.spread);
-      lng = coord.lng + randomFloat(random, -coord.spread, coord.spread);
-    } else {
-      lat = center.lat + randomFloat(random, -center.jitter, center.jitter);
-      lng = center.lng + randomFloat(random, -center.jitter, center.jitter);
-    }
+    const site = QUARRY_SITES[i];
+    const district = site.district;
+    const { lat, lng } = site; // real pit centroid — no jitter, this is an actual location
 
     const mineralType = pickWeighted(random, MINERAL_WEIGHTS);
     const status = pickWeighted(random, STATUS_WEIGHTS);
@@ -256,8 +214,13 @@ function generateAll(): GeneratedData {
       renewals
     });
 
+    // Scale the declared volume with the pit's real mapped footprint (median ~11 ha), so a
+    // visibly huge site doesn't report the same monthly output as a two-hectare one.
     const [volMin, volMax] = EXTRACTION_VOLUME_M3_RANGE[mineralType];
-    const declaredExtractionVolumeM3Monthly = randomInt(random, volMin, volMax);
+    const sizeFactor = Math.min(5, Math.max(0.45, Math.sqrt(site.areaSqM / 110_000)));
+    const declaredExtractionVolumeM3Monthly = Math.round(
+      randomInt(random, volMin, volMax) * sizeFactor
+    );
     const isOverExtracting = status === "Warning" || status === "Violation";
     const aiEstimatedExtractionVolumeM3Monthly = isOverExtracting
       ? Math.round(declaredExtractionVolumeM3Monthly * randomFloat(random, 1.15, 1.6))
@@ -290,8 +253,10 @@ function generateAll(): GeneratedData {
       id: quarryId,
       name: `${district} ${mineralType} Quarry ${idNum}`,
       district,
-      lat: Math.max(8.0, Math.min(13.5, lat)),
-      lng: Math.max(76.5, Math.min(80.3, lng)),
+      lat,
+      lng,
+      siteId: site.siteId,
+      siteAreaSqM: site.areaSqM,
       mineralType,
       status,
       operatorId,

@@ -5,9 +5,16 @@ import type { ScanEvent, EPermit } from "../../types/permit";
 interface Props {
   permits: EPermit[];
   onScanResult: (scan: ScanEvent) => void;
+  /** Called on a cleared scan so the pass's remaining quota is drawn down, as a real scan would. */
+  onQuotaConsumed?: (permitId: string, tonnes: number) => void;
 }
 
-export function QRScannerSimulator({ permits, onScanResult }: Props) {
+/** Matches the rejection share in the seeded ledger (35 of 200 scans). */
+const INVALID_SCAN_PROBABILITY = 0.175;
+/** A tipper load, deducted from the pass on a cleared scan. */
+const LOAD_TONNES = 25;
+
+export function QRScannerSimulator({ permits, onScanResult, onQuotaConsumed }: Props) {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<ScanEvent | null>(null);
   const [scannedPermit, setScannedPermit] = useState<EPermit | null>(null);
@@ -17,8 +24,16 @@ export function QRScannerSimulator({ permits, onScanResult }: Props) {
     setResult(null);
     setScannedPermit(null);
 
+    // A rejection reason has to match the pass's actual state, or the readout contradicts itself.
+    const pickPermitFor = (reason: Exclude<ScanEvent["invalidReason"], undefined>) => {
+      const wanted =
+        reason === "Expired" ? "Expired" : reason === "Quantity Exceeded" ? "Exhausted" : "Revoked";
+      const pool = permits.filter((p) => p.status === wanted);
+      return pool.length ? pool[Math.floor(Math.random() * pool.length)] : undefined;
+    };
+
     setTimeout(() => {
-      const isInvalid = Math.random() < 0.3;
+      const isInvalid = Math.random() < INVALID_SCAN_PROBABILITY;
       
       const eventId = `SCN-SIM-${Date.now()}`;
       const location = { lat: 13.0827, lng: 80.2707, name: "Chennai Highway Checkpost" };
@@ -29,7 +44,10 @@ export function QRScannerSimulator({ permits, onScanResult }: Props) {
         
         const event: ScanEvent = {
           id: eventId,
-          permitId: invalidReason === "Forged" ? `PER-2026-${Math.floor(Math.random() * 90000 + 10000)}` : permits[Math.floor(Math.random() * permits.length)].id,
+          permitId:
+            invalidReason === "Forged"
+              ? `PER-2026-${Math.floor(Math.random() * 10000 + 90000)}`
+              : pickPermitFor(invalidReason)?.id ?? permits[0].id,
           timestamp: new Date().toISOString(),
           scannedByOfficer: "Officer Simulation",
           location,
@@ -56,8 +74,15 @@ export function QRScannerSimulator({ permits, onScanResult }: Props) {
         };
         
         setResult(event);
-        setScannedPermit(permit);
+        setScannedPermit({
+          ...permit,
+          utilizedQuantityTonnes: Math.min(
+            permit.authorizedQuantityTonnes,
+            permit.utilizedQuantityTonnes + LOAD_TONNES
+          ),
+        });
         onScanResult(event);
+        onQuotaConsumed?.(permit.id, LOAD_TONNES);
       }
       setIsScanning(false);
     }, 1500);

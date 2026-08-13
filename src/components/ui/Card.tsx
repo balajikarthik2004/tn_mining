@@ -9,7 +9,7 @@ export function Card({ className = "", interactive = false, ...props }: CardProp
   return (
     <div
       className={`surface-card ${interactive
-        ? "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+        ? "hover-progress transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
         : ""
         } ${className}`}
       {...props}

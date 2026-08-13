@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Menu, X, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { NAV_ITEMS, NAV_SECTIONS } from "./navConfig";
 import { BrandMark } from "../components/ui/BrandMark";
-
+import tn from "../assets/tn.png"
 const COLLAPSE_STORAGE_KEY = "tn-mining:nav-collapsed";
 
 /** Longest-prefix match so detail routes (/licensing/:id) still light up their parent. */
@@ -34,7 +34,7 @@ export function Layout() {
     });
 
   return (
-    <div className="flex h-screen flex-col bg-canvas md:flex-row">
+    <div className="flex h-full flex-col bg-canvas md:flex-row">
       {/* Mobile topbar */}
       <header className="chrome-deep flex shrink-0 items-center justify-between px-4 py-3 text-white md:hidden">
         <button
@@ -82,7 +82,7 @@ export function Layout() {
         <header className="glass-bar z-20 hidden shrink-0 items-center justify-between gap-4 border-b border-neutral-border/80 px-6 py-3 md:flex">
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <span className="shrink-0 font-medium text-neutral-ink/45">
-              Department of Geology &amp; Mining
+              Department of Minerals &amp; Mines
             </span>
             <ChevronRight className="h-3.5 w-3.5 shrink-0 text-neutral-ink/25" aria-hidden="true" />
             <span className="truncate font-heading font-bold text-brand-900">{activeItem.label}</span>
@@ -110,8 +110,9 @@ function SidebarContent({
       <div
         className={`flex items-center py-[1.15rem] ${isCollapsed ? "flex-col gap-3 px-2" : "gap-3 px-5"}`}
       >
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-inset ring-white/20">
-          <BrandMark className="h-6 w-6 text-gold-300" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-inset ring-white/20">
+        <img src={tn} alt="TN Logo" className="h-9 w-9" />
+          {/* <BrandMark className="h-6 w-6 text-gold-300" /> */}
         </div>
 
         {!isCollapsed && (

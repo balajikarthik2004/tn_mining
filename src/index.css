@@ -120,14 +120,24 @@
    Base
    ========================================================================== */
 
-html,
-body,
-#root {
-  height: 100%;
+/**
+ * UI scale. `zoom` shrinks everything, but `100%`/`100vh` still resolve against the *unscaled*
+ * viewport — so a shell sized to 100% renders at 90% of the screen and leaves a strip of canvas at
+ * the bottom. Dividing the root height by the same factor cancels that out; keep the two in sync.
+ */
+:root {
+  --ui-zoom: 0.9;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  zoom: var(--ui-zoom);
+  height: calc(100% / var(--ui-zoom));
+}
+
+body,
+#root {
+  height: 100%;
 }
 
 body {
@@ -245,6 +255,38 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/**
+ * Hover "progress" line: a bar that sweeps along the bottom edge from left to right when the card
+ * is hovered. Set the colour per card with the arbitrary-property utility
+ * `[--progress-color:var(--color-gold-500)]`; it defaults to the brand accent.
+ */
+@utility hover-progress {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 3px;
+    border-radius: 9999px;
+    background-image: linear-gradient(90deg,
+        transparent 0%,
+        var(--progress-color, var(--color-brand-500)) 18%,
+        var(--progress-color, var(--color-brand-500)) 82%,
+        transparent 100%);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 750ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  &:hover::after,
+  &:focus-within::after {
+    transform: scaleX(1);
+  }
 }
 
 /* Loading shimmer (Skeleton). */

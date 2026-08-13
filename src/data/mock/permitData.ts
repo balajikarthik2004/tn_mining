@@ -1,10 +1,36 @@
-import type { EPermit, ScanEvent, EPermitStatus } from "../../types/permit";
-import { createSeededRandom, pick, randomFloat, randomInt } from "./seededRandom";
+import type { EPermit, ScanEvent, EPermitStatus, InvalidReason } from "../../types/permit";
+import { createSeededRandom, pick, randomInt, randomFloat } from "./seededRandom";
+import { getMockData } from "./generateMockData";
 
 const SEED = 12055;
 
 let cachedPermits: EPermit[] | null = null;
 let cachedScans: ScanEvent[] | null = null;
+
+/**
+ * Border and intra-state checkposts where transport e-Passes are scanned. Coordinates are the real
+ * locations of those checkposts; scans are recorded *at* the post rather than scattered around it,
+ * because that is what a checkpost scan means.
+ */
+const CHECKPOSTS = [
+  { name: "Attibele Border Checkpost", lat: 12.7766, lng: 77.777 },
+  { name: "Hosur Checkpost", lat: 12.7409, lng: 77.8253 },
+  { name: "Walayar Checkpost", lat: 10.8407, lng: 76.8488 },
+  { name: "Tada Border Checkpost", lat: 13.5855, lng: 80.0245 },
+  { name: "Kaliyakkavilai Checkpost", lat: 8.3379, lng: 77.161 },
+  { name: "Oddanchatram Checkpost", lat: 10.4869, lng: 77.7477 },
+] as const;
+
+const OFFICERS = [
+  "Inspector R. Rajan",
+  "Officer S. Karthik",
+  "Officer M. Priya",
+  "Inspector K. Suresh",
+] as const;
+
+const SCAN_COUNT = 200;
+/** Share of scans that fail validation — the rest clear the checkpost. */
+const INVALID_SCAN_COUNT = 35;
 
 export function getMockPermitData() {
   if (cachedPermits && cachedScans) {
@@ -12,104 +38,115 @@ export function getMockPermitData() {
   }
 
   const random = createSeededRandom(SEED);
+  const { quarries, operators } = getMockData();
+  const operatorsById = new Map(operators.map((o) => [o.id, o]));
+
+  const now = new Date();
   const permits: EPermit[] = [];
-  const scans: ScanEvent[] = [];
 
-  for (let i = 1; i <= 50; i++) {
-    const isExpired = i <= 5;
-    const isExhausted = i > 5 && i <= 10;
-    
+  // One transport e-Pass per quarry, carrying that quarry's real name, district and mineral so the
+  // page agrees with the dashboard and licensing views.
+  quarries.forEach((quarry, index) => {
+    const sequence = index + 1;
     let status: EPermitStatus = "Active";
-    if (isExpired) status = "Expired";
-    if (isExhausted) status = "Exhausted";
-    
-    const authorizedQuantityTonnes = randomInt(random, 100, 1000) * 10;
-    let utilizedQuantityTonnes = 0;
-    
-    if (status === "Exhausted") utilizedQuantityTonnes = authorizedQuantityTonnes;
-    else if (status === "Active") utilizedQuantityTonnes = Math.round(authorizedQuantityTonnes * randomFloat(random, 0.1, 0.8));
-    else utilizedQuantityTonnes = Math.round(authorizedQuantityTonnes * randomFloat(random, 0.5, 0.9));
+    if (sequence <= 5) status = "Expired";
+    else if (sequence <= 10) status = "Exhausted";
+    else if (sequence <= 13) status = "Revoked";
 
-    const validFromDate = new Date();
-    validFromDate.setDate(validFromDate.getDate() - randomInt(random, 1, 30));
-    
-    const validUntilDate = new Date(validFromDate);
-    validUntilDate.setDate(validUntilDate.getDate() + 90);
+    const authorizedQuantityTonnes = randomInt(random, 100, 1000) * 10;
+    let utilizedQuantityTonnes: number;
+    if (status === "Exhausted") {
+      utilizedQuantityTonnes = authorizedQuantityTonnes;
+    } else if (status === "Active") {
+      utilizedQuantityTonnes = Math.round(
+        authorizedQuantityTonnes * randomFloat(random, 0.1, 0.8)
+      );
+    } else {
+      utilizedQuantityTonnes = Math.round(
+        authorizedQuantityTonnes * randomFloat(random, 0.5, 0.9)
+      );
+    }
+
+    const validFrom = new Date(now);
+    validFrom.setDate(validFrom.getDate() - randomInt(random, 1, 30));
+
+    let validUntil: Date;
     if (status === "Expired") {
-      validUntilDate.setDate(new Date().getDate() - randomInt(random, 1, 10));
+      // Lapsed between yesterday and ten days ago. (An earlier version used
+      // `new Date().getDate()` — the day-of-month — which produced expiry dates in the future.)
+      validUntil = new Date(now);
+      validUntil.setDate(validUntil.getDate() - randomInt(random, 1, 10));
+    } else {
+      validUntil = new Date(validFrom);
+      validUntil.setDate(validUntil.getDate() + 90);
     }
 
     permits.push({
-      id: `PER-2026-${String(10000 + i)}`,
-      quarryId: `Q-${String(i).padStart(3, "0")}`,
-      quarryName: `Quarry ${i}`,
-      operatorName: `Operator ${randomInt(random, 1, 20)}`,
-      mineralType: pick(random, ["Sand", "Granite", "Rough Stone"]),
-      validFrom: validFromDate.toISOString(),
-      validUntil: validUntilDate.toISOString(),
+      id: `PER-2026-${String(10000 + sequence)}`,
+      quarryId: quarry.id,
+      quarryName: quarry.name,
+      district: quarry.district,
+      operatorName: operatorsById.get(quarry.operatorId)?.name ?? "Unrecorded operator",
+      mineralType: quarry.mineralType,
+      validFrom: validFrom.toISOString(),
+      validUntil: validUntil.toISOString(),
       authorizedQuantityTonnes,
       utilizedQuantityTonnes,
       status,
-      issueTimestamp: validFromDate.toISOString(),
     });
-  }
+  });
 
-  const CHECKPOSTS = [
-    { name: "Attibele Border Checkpost", lat: 12.7766, lng: 77.7770 },
-    { name: "Walayar Checkpost", lat: 10.8407, lng: 76.8488 },
-    { name: "Tada Border Checkpost", lat: 13.5855, lng: 80.0245 },
-    { name: "Hosur Checkpost", lat: 12.7409, lng: 77.8253 },
-    { name: "Kaliyakkavilai Checkpost", lat: 8.3379, lng: 77.1610 }
-  ];
+  const permitsById = new Map(permits.map((p) => [p.id, p]));
+  const byStatus = (status: EPermitStatus) => permits.filter((p) => p.status === status);
 
-  const OFFICERS = ["Inspector Rajan", "Officer Karthik", "Officer Priya", "Inspector Suresh"];
+  // Today's scans, spread over the shift so far — never stamped in the future.
+  const startOfDay = new Date(now);
+  startOfDay.setHours(6, 0, 0, 0);
+  const shiftWindowMs = Math.max(60 * 60 * 1000, now.getTime() - startOfDay.getTime());
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  for (let i = 1; i <= 200; i++) {
-    const isInvalid = i <= 35;
-    
+  const scans: ScanEvent[] = [];
+  for (let i = 1; i <= SCAN_COUNT; i++) {
     const checkpost = pick(random, CHECKPOSTS);
-    const lat = checkpost.lat + randomFloat(random, -0.05, 0.05);
-    const lng = checkpost.lng + randomFloat(random, -0.05, 0.05);
+    const timestamp = new Date(startOfDay.getTime() + Math.floor(random() * shiftWindowMs));
+    const base = {
+      id: `SCN-${String(1000 + i)}`,
+      timestamp: timestamp.toISOString(),
+      scannedByOfficer: pick(random, OFFICERS),
+      location: { lat: checkpost.lat, lng: checkpost.lng, name: checkpost.name },
+    };
 
-    const timestamp = new Date(today.getTime() + randomInt(random, 1000 * 60 * 60 * 8, 1000 * 60 * 60 * 20));
+    if (i <= INVALID_SCAN_COUNT) {
+      // Each rejection reason has to be backed by a permit in the matching state — a "Revoked"
+      // rejection against an Active pass would be a contradiction in the data.
+      const reasonPool: InvalidReason[] = ["Forged", "Expired", "Quantity Exceeded", "Revoked"];
+      const invalidReason = pick(random, reasonPool);
 
-    if (isInvalid) {
-      const invalidReason = pick(random, ["Forged", "Expired", "Quantity Exceeded", "Revoked"] as const) as "Forged" | "Expired" | "Quantity Exceeded" | "Revoked";
-      let permitId = "";
-      
+      let permitId: string;
       if (invalidReason === "Forged") {
+        // Outside the issued range (10001+), so a forged id can never collide with a real pass.
         permitId = `PER-2026-${randomInt(random, 90000, 99999)}`;
       } else if (invalidReason === "Expired") {
-        permitId = pick(random, permits.filter(p => p.status === "Expired")).id;
+        permitId = pick(random, byStatus("Expired")).id;
       } else if (invalidReason === "Quantity Exceeded") {
-        permitId = pick(random, permits.filter(p => p.status === "Exhausted")).id;
+        permitId = pick(random, byStatus("Exhausted")).id;
       } else {
-        permitId = pick(random, permits).id;
+        permitId = pick(random, byStatus("Revoked")).id;
       }
 
       scans.push({
-        id: `SCN-${String(1000 + i)}`,
+        ...base,
         permitId,
-        timestamp: timestamp.toISOString(),
-        scannedByOfficer: pick(random, OFFICERS),
-        location: { lat, lng, name: checkpost.name },
         result: "Invalid",
-        invalidReason
+        invalidReason,
+        quarryName: permitsById.get(permitId)?.quarryName,
       });
     } else {
-      const activePermits = permits.filter(p => p.status === "Active");
-      const permitId = pick(random, activePermits).id;
-      
+      const permit = pick(random, byStatus("Active"));
       scans.push({
-        id: `SCN-${String(1000 + i)}`,
-        permitId,
-        timestamp: timestamp.toISOString(),
-        scannedByOfficer: pick(random, OFFICERS),
-        location: { lat, lng, name: checkpost.name },
-        result: "Valid"
+        ...base,
+        permitId: permit.id,
+        result: "Valid",
+        quarryName: permit.quarryName,
       });
     }
   }
