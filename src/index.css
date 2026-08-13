@@ -2,23 +2,32 @@
 
 @theme {
   /* Modern SaaS Minimal Palette */
-  --color-brand-900: #0f172a; /* Slate 900 */
-  --color-brand-700: #334155; /* Slate 700 */
-  --color-brand-50: #f8fafc;  /* Slate 50 */
+  --color-brand-900: #0f172a;
+  /* Slate 900 */
+  --color-brand-700: #334155;
+  /* Slate 700 */
+  --color-brand-50: #f8fafc;
+  /* Slate 50 */
 
   --color-gold-500: #eab308;
   --color-gold-300: #fde047;
   --color-gold-50: #fefce8;
 
-  --color-neutral-ink: #0f172a; /* Slate 900 */
+  --color-neutral-ink: #0f172a;
+  /* Slate 900 */
   --color-neutral-surface: #ffffff;
-  --color-neutral-border: #e2e8f0; /* Slate 200 */
+  --color-neutral-border: #e2e8f0;
+  /* Slate 200 */
 
   /* Status colors — semantic, kept visually distinct from brand */
-  --color-status-compliant: #10b981; /* Emerald 500 */
-  --color-status-warning: #f59e0b;   /* Amber 500 */
-  --color-status-violation: #ef4444; /* Red 500 */
-  --color-status-expired: #64748b;   /* Slate 500 */
+  --color-status-compliant: #10b981;
+  /* Emerald 500 */
+  --color-status-warning: #f59e0b;
+  /* Amber 500 */
+  --color-status-violation: #ef4444;
+  /* Red 500 */
+  --color-status-expired: #64748b;
+  /* Slate 500 */
 
   --font-sans: "Roboto", system-ui, -apple-system, sans-serif;
   --font-heading: "Montserrat", system-ui, -apple-system, sans-serif;
@@ -36,7 +45,13 @@ body {
   font-family: var(--font-sans);
 }
 
-h1, h2, h3, h4, h5, h6, .font-heading {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
   font-family: var(--font-heading);
 }
 
