@@ -73,6 +73,26 @@ const INSPECTOR_NAMES = [
   "J. Muthu Kumar",
 ];
 
+const REAL_COORDINATES: Record<string, {lat: number, lng: number}[]> = {
+  Chennai: [{ lat: 12.966, lng: 80.169 }], // Trisulam
+  Kanchipuram: [{ lat: 12.966, lng: 80.169 }],
+  Madurai: [{ lat: 10.021, lng: 78.331 }], // Melur granite
+  Salem: [{ lat: 11.7122, lng: 78.1686 }], // Magnesite Chalk Hills
+  Ariyalur: [{ lat: 11.314, lng: 79.074 }], // Dalavoi Limestone
+  Tirunelveli: [{ lat: 8.805, lng: 77.731 }], // Sethurayanputhur Limestone
+  Coimbatore: [{ lat: 10.900, lng: 76.960 }], // Madukkarai
+  Tiruchirappalli: [{ lat: 10.985, lng: 78.940 }], // Dalmiapuram
+  Dindigul: [{ lat: 10.355, lng: 77.965 }], 
+  Karur: [{ lat: 10.984, lng: 77.887 }], // Thenilai Magnesite/Limestone
+  Villupuram: [{ lat: 11.930, lng: 79.480 }],
+  Vellore: [{ lat: 12.900, lng: 79.120 }],
+  Namakkal: [{ lat: 11.160, lng: 77.980 }],
+  Krishnagiri: [{ lat: 12.635, lng: 78.010 }],
+  Erode: [{ lat: 11.330, lng: 77.620 }],
+  Cuddalore: [{ lat: 11.562, lng: 79.505 }], // Neyveli Lignite
+  Thanjavur: [{ lat: 10.660, lng: 79.030 }]
+};
+
 function toISODate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
@@ -117,8 +137,18 @@ function generateAll(): GeneratedData {
 
     const district = districtSequence[i];
     const center = DISTRICT_CENTERS[district];
-    const lat = center.lat + randomFloat(random, -0.35, 0.35);
-    const lng = center.lng + randomFloat(random, -0.35, 0.35);
+    
+    let lat: number, lng: number;
+    const realCoords = REAL_COORDINATES[district];
+    if (realCoords && realCoords.length > 0) {
+      const coord = pick(random, realCoords);
+      // Scatter points within the bounds of this specific massive quarry pit (approx ~100m)
+      lat = coord.lat + randomFloat(random, -0.001, 0.001);
+      lng = coord.lng + randomFloat(random, -0.001, 0.001);
+    } else {
+      lat = center.lat + randomFloat(random, -0.35, 0.35);
+      lng = center.lng + randomFloat(random, -0.35, 0.35);
+    }
 
     const mineralType = pickWeighted(random, MINERAL_WEIGHTS);
     const status = pickWeighted(random, STATUS_WEIGHTS);

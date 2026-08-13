@@ -4,6 +4,7 @@ import { getMockData } from "../../data/mock/generateMockData";
 import type { Quarry } from "../../types/quarry";
 import { RevenueGapDashboard } from "./RevenueGapDashboard";
 import { AnomalyList } from "./AnomalyList";
+import { AnomalyMap } from "./components/AnomalyMap";
 
 export function AnomalyDetectionPage() {
   const [quarries, setQuarries] = useState<Quarry[]>([]);
@@ -26,6 +27,7 @@ export function AnomalyDetectionPage() {
       </div>
 
       <RevenueGapDashboard quarries={quarries} />
+      <AnomalyMap quarries={quarries} />
       <AnomalyList quarries={quarries} />
     </div>
   );
