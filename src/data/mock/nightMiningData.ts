@@ -1,4 +1,5 @@
 import type { NightAlert } from "../../types/nightMining";
+import type { District } from "../../types/common";
 import { createSeededRandom, pick, randomInt } from "./seededRandom";
 
 const SEED = 88200;
@@ -11,7 +12,7 @@ export function getMockNightAlerts(): NightAlert[] {
   const random = createSeededRandom(SEED);
   const alerts: NightAlert[] = [];
 
-  const QUARRIES = [
+  const QUARRIES: { id: string; name: string; dist: District; lat: number; lng: number }[] = [
     { id: "Q-012", name: "Sri Murugan Rough Stone", dist: "Kanchipuram", lat: 12.836, lng: 79.704 },
     { id: "Q-045", name: "Salem Blue Metals", dist: "Salem", lat: 11.664, lng: 78.146 },
     { id: "Q-088", name: "Madurai Granite Exports", dist: "Madurai", lat: 9.925, lng: 78.119 },
@@ -73,6 +74,12 @@ export function getMockNightAlerts(): NightAlert[] {
       
       detectionTime: detectionTime.toISOString(),
       detectionType,
+      sensor:
+        detectionType === "Artificial Lighting"
+          ? "VIIRS Day/Night Band"
+          : detectionType === "Thermal Signature"
+            ? "Landsat-9 TIRS"
+            : "Sentinel-1 SAR",
       confidenceScore,
       
       evidence: {
