@@ -54,7 +54,7 @@ export function DefaulterList({ records }: { records: RoyaltyRecord[] }) {
             <div className="flex justify-between items-end pl-2">
               <div>
                 <p className="text-xs font-bold text-neutral-ink/60">{d.quarryName}</p>
-                <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mt-1">Overdue: {d.daysOverdue}+ days</p>
+                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-1">Overdue: {d.daysOverdue}+ days</p>
               </div>
               <div className="flex gap-2">
                 <button className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-100 hover:border-red-200 text-red-700 rounded-lg transition-colors text-[10px] font-bold uppercase tracking-widest" title="Issue Legal Notice">

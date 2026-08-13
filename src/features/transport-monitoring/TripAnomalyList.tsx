@@ -17,8 +17,8 @@ export function TripAnomalyList({ trips }: Props) {
   if (anomalousTrips.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center h-full min-h-[400px] p-6">
-        <div className="w-16 h-16 bg-green-50 border border-green-100 rounded-full flex items-center justify-center mb-4 shadow-sm">
-          <CheckCircle2 className="w-8 h-8 text-green-500" />
+        <div className="w-16 h-16 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center mb-4 shadow-sm">
+          <CheckCircle2 className="w-8 h-8 text-emerald-500" />
         </div>
         <p className="text-brand-900 font-bold text-lg">No Anomalies Detected</p>
         <p className="text-sm font-medium text-neutral-ink/50 mt-1 max-w-[250px]">All monitored internal trips are currently compliant with their declared e-Pass routes.</p>
@@ -48,12 +48,12 @@ export function TripAnomalyList({ trips }: Props) {
 
           return (
             <div key={trip.id} className="p-4 bg-white border border-neutral-border hover:border-brand-500/50 hover:shadow-md rounded-xl group transition-all relative overflow-hidden">
-              <div className={`absolute top-0 left-0 w-1 h-full ${latestAnomaly.severity === 'High' ? 'bg-red-500' : 'bg-orange-500'}`}></div>
+              <div className={`absolute top-0 left-0 w-1 h-full ${latestAnomaly.severity === 'High' ? 'bg-red-500' : 'bg-amber-500'}`}></div>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex gap-3">
                   <div className={`mt-0.5 p-2 rounded-lg shrink-0 border ${
                     latestAnomaly.severity === "High" ? "bg-red-50 text-red-600 border-red-100" :
-                    "bg-orange-50 text-orange-600 border-orange-100"
+                    "bg-amber-50 text-amber-600 border-amber-100"
                   }`}>
                     <Icon className="w-4 h-4" />
                   </div>

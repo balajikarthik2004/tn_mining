@@ -66,10 +66,10 @@ export function CaseRegistry({ cases }: Props) {
                 <td className="px-6 py-4 text-brand-900 text-xs font-bold">{c.violationType}</td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border shadow-sm ${
-                    c.status === "Collected" ? "bg-green-50 text-green-700 border-green-200" :
+                    c.status === "Collected" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
                     c.status === "Written Off" ? "bg-neutral-surface text-neutral-ink/50 border-neutral-border" :
                     c.status === "Violation Detected" ? "bg-red-50 text-red-700 border-red-200" :
-                    "bg-orange-50 text-orange-700 border-orange-200"
+                    "bg-amber-50 text-amber-700 border-amber-200"
                   }`}>
                     {c.status}
                   </span>

@@ -70,8 +70,8 @@ export function QRScannerSimulator({ permits, onScanResult }: Props) {
           <ScanLine className="w-5 h-5 text-brand-500" /> Mobile Field Scanner
         </h3>
         <span className="flex h-2 w-2 relative">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
       </div>
       
@@ -117,12 +117,12 @@ export function QRScannerSimulator({ permits, onScanResult }: Props) {
         {result && (
           <div className="w-full h-full flex flex-col items-center justify-center animate-in zoom-in duration-300 z-10">
             {result.result === "Valid" ? (
-              <div className="w-full max-w-sm bg-green-950/80 backdrop-blur border border-green-500/50 rounded-2xl p-6 text-center shadow-[0_0_40px_rgba(34,197,94,0.15)] relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
-                <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30">
+              <div className="w-full max-w-sm bg-emerald-950/80 backdrop-blur border border-emerald-500/50 rounded-2xl p-6 text-center shadow-[0_0_40px_rgba(34,197,94,0.15)] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
+                <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-black text-green-400 uppercase tracking-widest mb-6">Verified</h2>
+                <h2 className="text-2xl font-black text-emerald-400 uppercase tracking-widest mb-6">Verified</h2>
                 <div className="bg-black/40 rounded-xl p-4 text-left space-y-3">
                   <div className="flex justify-between items-center border-b border-white/5 pb-2">
                     <span className="text-xs font-bold text-white/50 uppercase tracking-widest">e-Pass ID</span>
@@ -139,12 +139,12 @@ export function QRScannerSimulator({ permits, onScanResult }: Props) {
                   <div className="pt-2 mt-2 border-t border-white/10">
                     <div className="flex justify-between items-end mb-1">
                       <span className="text-xs font-bold text-white/50 uppercase tracking-widest">Quota</span>
-                      <span className="text-xs font-black text-green-400">
+                      <span className="text-xs font-black text-emerald-400">
                         {(scannedPermit?.authorizedQuantityTonnes || 0) - (scannedPermit?.utilizedQuantityTonnes || 0)}t remaining
                       </span>
                     </div>
                     <div className="w-full bg-black rounded-full h-1.5">
-                      <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${((scannedPermit?.authorizedQuantityTonnes || 1) - (scannedPermit?.utilizedQuantityTonnes || 0)) / (scannedPermit?.authorizedQuantityTonnes || 1) * 100}%` }}></div>
+                      <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${((scannedPermit?.authorizedQuantityTonnes || 1) - (scannedPermit?.utilizedQuantityTonnes || 0)) / (scannedPermit?.authorizedQuantityTonnes || 1) * 100}%` }}></div>
                     </div>
                   </div>
                 </div>

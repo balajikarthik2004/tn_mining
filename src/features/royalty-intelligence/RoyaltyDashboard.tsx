@@ -39,14 +39,14 @@ export function RoyaltyDashboard({ records }: { records: RoyaltyRecord[] }) {
         <p className="text-[10px] font-bold text-neutral-ink/60 mt-1 uppercase tracking-wide truncate">Based on AI estimates</p>
       </div>
 
-      <div className="bg-white border border-green-200 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-center">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-full -translate-y-12 translate-x-12"></div>
+      <div className="bg-white border border-emerald-200 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-center">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -translate-y-12 translate-x-12"></div>
         <div className="relative z-10 w-full">
-          <h3 className="text-[10px] font-black text-green-700 uppercase tracking-widest flex items-center gap-1.5 truncate">
-            <IndianRupee className="w-3.5 h-3.5 text-green-600 shrink-0" /> Collected (This Month)
+          <h3 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest flex items-center gap-1.5 truncate">
+            <IndianRupee className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Collected (This Month)
           </h3>
-          <p className="text-xl font-black text-green-700 mt-2 truncate" title={formatINR(stats.collected)}>{formatINR(stats.collected)}</p>
-          <p className="text-[10px] font-bold text-green-700/70 mt-1 uppercase tracking-wide truncate">{((stats.collected / stats.expected) * 100).toFixed(1)}% recovery rate</p>
+          <p className="text-xl font-black text-emerald-700 mt-2 truncate" title={formatINR(stats.collected)}>{formatINR(stats.collected)}</p>
+          <p className="text-[10px] font-bold text-emerald-700/70 mt-1 uppercase tracking-wide truncate">{((stats.collected / stats.expected) * 100).toFixed(1)}% recovery rate</p>
         </div>
       </div>
 

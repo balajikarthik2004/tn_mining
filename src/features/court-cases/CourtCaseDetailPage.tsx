@@ -23,7 +23,7 @@ export function CourtCaseDetailPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gold-50 overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="shrink-0 bg-white border-b border-neutral-border px-4 py-3 sm:px-6 sm:py-4 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between gap-4 z-10 relative">
         <div className="flex items-start gap-4">
@@ -36,10 +36,10 @@ export function CourtCaseDetailPage() {
                 Legal Case Dossier: {courtCase.id}
               </h1>
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm ${
-                courtCase.status === "Collected" ? "bg-green-50 text-green-700 border-green-200" :
+                courtCase.status === "Collected" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
                 courtCase.status === "Written Off" ? "bg-neutral-surface text-neutral-ink/50 border-neutral-border" :
                 courtCase.status === "Violation Detected" ? "bg-red-50 text-red-700 border-red-200" :
-                "bg-orange-50 text-orange-700 border-orange-200"
+                "bg-amber-50 text-amber-700 border-amber-200"
               }`}>
                 {courtCase.status}
               </span>

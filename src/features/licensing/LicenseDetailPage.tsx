@@ -120,12 +120,12 @@ export function LicenseDetailPage() {
     license.status === "Expiring Soon" ? Clock : AlertCircle;
     
   const statusColor = 
-    license.status === "Active" ? "bg-green-50 text-green-700 border-green-200" :
-    license.status === "Expiring Soon" ? "bg-orange-50 text-orange-700 border-orange-200" :
+    license.status === "Active" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+    license.status === "Expiring Soon" ? "bg-amber-50 text-amber-700 border-amber-200" :
     "bg-red-50 text-red-700 border-red-200";
 
   return (
-    <div className="flex flex-col h-full bg-gold-50 overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="shrink-0 bg-white border-b border-neutral-border px-4 py-3 sm:px-6 sm:py-4 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between gap-4 z-10 relative">
         <div className="flex items-start gap-4">
@@ -251,7 +251,7 @@ export function LicenseDetailPage() {
                   </div>
                   <div className="bg-neutral-surface border border-neutral-border rounded-lg p-4">
                     <span className="block text-[10px] font-bold text-neutral-ink/50 uppercase tracking-widest mb-1">Operator Email</span>
-                    <span className="block text-brand-900 font-bold">{operator.contactEmail}</span>
+                    <span className="block break-all text-brand-900 font-bold" title={operator.contactEmail}>{operator.contactEmail}</span>
                   </div>
                 </div>
                 {license.status === "Expired" && (
@@ -320,14 +320,14 @@ export function LicenseDetailPage() {
               <div className="p-6 space-y-4">
                 {license.payments.map(pay => (
                   <div key={pay.id} className="flex items-center justify-between p-4 bg-white border border-neutral-border rounded-xl hover:shadow-md transition-shadow group relative overflow-hidden">
-                    <div className={`absolute top-0 left-0 w-1 h-full ${pay.status === 'Success' ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                    <div className={`absolute top-0 left-0 w-1 h-full ${pay.status === 'Success' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
                     <div>
                       <div className="font-bold text-brand-900 text-sm">{pay.type}</div>
                       <div className="text-[10px] font-bold text-neutral-ink/40 uppercase tracking-widest mt-1">{new Date(pay.date).toLocaleDateString("en-IN")}</div>
                     </div>
                     <div className="text-right">
                       <div className="font-black text-brand-900 text-base group-hover:text-brand-700 transition-colors">{formatINR(pay.amountINR)}</div>
-                      <div className={`text-[9px] font-black uppercase tracking-widest mt-1 px-1.5 py-0.5 rounded inline-block border ${pay.status === 'Success' ? 'text-green-700 bg-green-50 border-green-200' : 'text-orange-700 bg-orange-50 border-orange-200'}`}>
+                      <div className={`text-[9px] font-black uppercase tracking-widest mt-1 px-1.5 py-0.5 rounded inline-block border ${pay.status === 'Success' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'}`}>
                         {pay.status}
                       </div>
                     </div>
@@ -347,10 +347,10 @@ export function LicenseDetailPage() {
                   <div className="space-y-4">
                     {license.renewals.map((ren) => (
                       <div key={ren.id} className="p-4 rounded-xl border border-neutral-border bg-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
                         <div className="flex items-center justify-between space-x-2 mb-2">
                           <div className="font-black text-brand-900">{ren.periodStart.slice(0, 4)} - {ren.periodEnd.slice(0, 4)}</div>
-                          <div className="text-[9px] font-black text-green-700 uppercase tracking-widest bg-green-50 border border-green-200 px-2 py-0.5 rounded">{ren.status}</div>
+                          <div className="text-[9px] font-black text-emerald-700 uppercase tracking-widest bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">{ren.status}</div>
                         </div>
                         <div className="text-xs font-medium text-neutral-ink/60 leading-relaxed">Lease period extended and approved by district collectorate.</div>
                       </div>

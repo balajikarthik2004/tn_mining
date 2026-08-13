@@ -25,12 +25,42 @@ export function StatCards({ quarries }: StatCardsProps) {
   }, [quarries]);
 
   return (
-    <div className="flex flex-wrap gap-3">
-      <StatCard label="Total Quarries" value={stats.total} icon={Pickaxe} accent="brand" />
-      <StatCard label="Active" value={stats.active} icon={CheckCircle2} accent="compliant" />
-      <StatCard label="Violations Today" value={stats.violationsToday} icon={Siren} accent="violation" />
-      <StatCard label="Expired Licenses" value={stats.expiredLicenses} icon={Ban} accent="expired" />
-      <StatCard label="Revenue This Month" value={formatINR(stats.revenueThisMonth)} icon={IndianRupee} accent="gold" />
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <StatCard
+        label="Total Quarries"
+        value={stats.total}
+        icon={Pickaxe}
+        accent="brand"
+        hint="Matching current filters"
+      />
+      <StatCard
+        label="Active"
+        value={stats.active}
+        icon={CheckCircle2}
+        accent="compliant"
+        hint="Licence in force"
+      />
+      <StatCard
+        label="Violations Today"
+        value={stats.violationsToday}
+        icon={Siren}
+        accent="violation"
+        hint="Logged in last 24 h"
+      />
+      <StatCard
+        label="Expired Licenses"
+        value={stats.expiredLicenses}
+        icon={Ban}
+        accent="expired"
+        hint="Operating without cover"
+      />
+      <StatCard
+        label="Royalty Collected"
+        value={formatINR(stats.revenueThisMonth)}
+        icon={IndianRupee}
+        accent="gold"
+        hint="This month, seigniorage fee"
+      />
     </div>
   );
 }

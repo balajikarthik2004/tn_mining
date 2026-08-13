@@ -21,7 +21,7 @@ export function TransportEnforcementSidebar({ trips }: { trips: VehicleTrip[] })
         </div>
         <div className="bg-white border border-neutral-border rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide">Compliant</h3>
           </div>
           <p className="text-3xl font-black text-brand-900">{compliantCount}</p>
@@ -30,7 +30,7 @@ export function TransportEnforcementSidebar({ trips }: { trips: VehicleTrip[] })
 
       <div className="flex items-center justify-between mt-2">
         <h2 className="font-bold text-brand-900 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-orange-500" />
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
           Active Enforcement Feed
         </h2>
         <span className="text-xs font-semibold text-neutral-ink/50 bg-neutral-surface px-2 py-1 rounded-md border border-neutral-border">Live</span>
@@ -56,7 +56,7 @@ export function TransportEnforcementSidebar({ trips }: { trips: VehicleTrip[] })
                   </span>
                 )}
                 {trip.permitStatus === "Missing" && (
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded uppercase border border-orange-100">
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded uppercase border border-amber-100">
                     <FileX className="w-3 h-3" /> No e-Pass
                   </span>
                 )}
@@ -79,7 +79,7 @@ export function TransportEnforcementSidebar({ trips }: { trips: VehicleTrip[] })
         ))}
         {illegalTrips.length === 0 && (
           <div className="text-center p-8 border-2 border-dashed border-neutral-border rounded-xl">
-            <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2 opacity-50" />
+            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-50" />
             <p className="text-sm font-bold text-neutral-ink/50">No critical alerts detected.</p>
           </div>
         )}

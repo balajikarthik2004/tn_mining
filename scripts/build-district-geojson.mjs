@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 /**
- * Regenerates src/data/geo/tn-districts.geojson.
+ * Regenerates public/geo/tn-districts.geojson.
  *
- * Downloads the full Tamil Nadu districts layer from datta07/INDIAN-SHAPEFILES (MIT licensed),
- * keeps only the 15 districts this app uses, rounds coordinates to 3 decimal places, and
- * decimates ring vertices ~8:1 -- shrinks ~8.8MB down to ~185KB, plenty of fidelity for a
- * state-level reference overlay at this app's zoom levels.
+ * Downloads the full Tamil Nadu districts layer from datta07/INDIAN-SHAPEFILES (MIT licensed) and
+ * keeps **all 38 present-day districts** (the earlier build kept 15, and a later hand-swapped GADM
+ * file only had the 30 pre-2019 districts — both are out of date). Coordinates are rounded to 3
+ * decimals (~110 m) and ring vertices decimated ~8:1, which is plenty of fidelity for a boundary
+ * overlay at this app's zoom levels (max ~10.5).
+ *
+ * Writes `district` on every feature. Re-run scripts/generate-mask.mjs afterwards so the
+ * Tamil-Nadu-only mask matches the new outline.
  *
  * Run with: node scripts/build-district-geojson.mjs
  */
@@ -16,11 +20,8 @@ const SOURCE_URL =
   "https://raw.githubusercontent.com/datta07/INDIAN-SHAPEFILES/master/STATES/TAMIL%20NADU/TAMIL%20NADU_DISTRICTS.geojson";
 const OUT_PATH = fileURLToPath(new URL("../public/geo/tn-districts.geojson", import.meta.url));
 
-const KEEP_DISTRICTS = [
-  "Salem", "Namakkal", "Tiruchirappalli", "Madurai", "Coimbatore",
-  "Krishnagiri", "Dindigul", "Karur", "Tirunelveli", "Villupuram",
-  "Vellore", "Erode", "Ariyalur", "Cuddalore", "Thanjavur",
-];
+/** Sanity check: the source must still carry the full present-day district set. */
+const EXPECTED_DISTRICT_COUNT = 38;
 
 const PRECISION = 3; // ~110m at this latitude
 const EVERY_NTH = 8;
@@ -54,10 +55,13 @@ const res = await fetch(SOURCE_URL);
 if (!res.ok) throw new Error(`Failed to fetch source geojson: ${res.status}`);
 const data = await res.json();
 
-const kept = data.features.filter((f) => KEEP_DISTRICTS.includes(f.properties.dtname));
-const missing = KEEP_DISTRICTS.filter((d) => !kept.some((f) => f.properties.dtname === d));
-if (missing.length) {
-  throw new Error(`Source data is missing expected districts: ${missing.join(", ")}`);
+const kept = data.features.filter((f) => f.properties?.dtname);
+if (kept.length !== EXPECTED_DISTRICT_COUNT) {
+  throw new Error(
+    `Expected ${EXPECTED_DISTRICT_COUNT} districts in the source layer, got ${kept.length}. ` +
+      `If Tamil Nadu has been reorganised again, bump EXPECTED_DISTRICT_COUNT and update ` +
+      `DISTRICTS/DISTRICT_CENTERS in src/.`
+  );
 }
 
 const simplified = {

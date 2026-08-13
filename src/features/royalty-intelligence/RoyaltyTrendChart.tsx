@@ -57,7 +57,7 @@ export function RoyaltyTrendChart({ records }: { records: RoyaltyRecord[] }) {
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             barGap={2}
           >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef1f7" />
             <XAxis 
               dataKey="name" 
               axisLine={false} 
@@ -73,7 +73,7 @@ export function RoyaltyTrendChart({ records }: { records: RoyaltyRecord[] }) {
             />
             <Tooltip 
               cursor={{ fill: '#f8fafc' }}
-              contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              contentStyle={{ borderRadius: '12px', border: '1px solid #e4e8f2', boxShadow: '0 6px 20px -8px rgb(27 26 78 / 0.25)' }}
               itemStyle={{ fontSize: '12px', fontWeight: 600 }}
               labelStyle={{ color: '#0f172a', fontWeight: 800, marginBottom: '8px' }}
               formatter={(value: any) => formatINR(value)}
@@ -82,8 +82,8 @@ export function RoyaltyTrendChart({ records }: { records: RoyaltyRecord[] }) {
               wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 700 }}
               iconType="circle"
             />
-            <Bar dataKey="Expected" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={20} />
-            <Bar dataKey="Paid" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={20} />
+            <Bar dataKey="Expected" fill="#c6ceff" radius={[4, 4, 0, 0]} barSize={20} />
+            <Bar dataKey="Paid" fill="#5b62ec" radius={[4, 4, 0, 0]} barSize={20} />
           </BarChart>
         </ResponsiveContainer>
       </div>

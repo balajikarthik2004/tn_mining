@@ -55,10 +55,10 @@ export function InterStateReportDashboard({ trips }: Props) {
         <h3 className="text-sm font-medium text-red-400">Invalid / No Permits</h3>
         <p className="text-3xl font-bold text-red-500 mt-2">{stats.invalidPermits.toLocaleString()}</p>
       </div>
-      <div className="bg-slate-800/80 backdrop-blur border border-orange-900/30 rounded-xl p-5 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-16 h-16 bg-orange-500/10 rounded-bl-full -mr-4 -mt-4"></div>
-        <h3 className="text-sm font-medium text-orange-400">Est. Illegal Transport Value</h3>
-        <p className="text-3xl font-bold text-orange-500 mt-2">{formatINR(stats.illegalValue)}</p>
+      <div className="bg-slate-800/80 backdrop-blur border border-amber-900/30 rounded-xl p-5 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/10 rounded-bl-full -mr-4 -mt-4"></div>
+        <h3 className="text-sm font-medium text-amber-400">Est. Illegal Transport Value</h3>
+        <p className="text-3xl font-bold text-amber-500 mt-2">{formatINR(stats.illegalValue)}</p>
       </div>
     </div>
   );

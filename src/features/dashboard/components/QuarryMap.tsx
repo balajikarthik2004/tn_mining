@@ -12,7 +12,7 @@ import type { MapRef, MapMouseEvent } from "react-map-gl/maplibre";
 import type { GeoJSONSource } from "maplibre-gl";
 import type { FeatureCollection, Point } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MapPin, Layers } from "lucide-react";
+import { MapPin, Layers, RotateCcw } from "lucide-react";
 import type { Quarry } from "../../../types/quarry";
 import { STATUS_META, type QuarryStatus } from "../../../types/common";
 import { TN_CENTER, TN_BOUNDS, DISTRICT_CENTERS } from "../../../data/mock/districts";
@@ -20,23 +20,18 @@ import { useDashboardStore } from "../../../store/dashboardStore";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
 
-const minimalMapStyle = {
-  version: 8 as const,
-  name: "Empty",
-  sources: {},
-  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
-  layers: [
-    {
-      id: "background",
-      type: "background",
-      paint: {
-        "background-color": "#f1f5f9", // slate-100
-      },
-    } as any,
-  ],
-};
+/**
+ * OpenFreeMap "positron" — a light, label-light basemap that gives roads/towns/coastline context
+ * without competing with the status markers. Token-free and no billing account (see CLAUDE.md).
+ * Replaces an empty background style, which left the map blank whenever the camera zoomed into a
+ * district.
+ */
+const BASEMAP_STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
 
-const TN_DISTRICTS_GEOJSON_URL = "/geo/tn-districts.geojson?v=3";
+const TN_DISTRICTS_GEOJSON_URL = "/geo/tn-districts.geojson?v=4";
+/** World polygon with Tamil Nadu punched out — hides every neighbouring state on the basemap. */
+const TN_MASK_GEOJSON_URL = "/geo/tn-mask.geojson?v=2";
+const TN_OUTLINE_GEOJSON_URL = "/geo/tn-outline.geojson?v=2";
 
 interface QuarryMapProps {
   quarries: Quarry[];
@@ -51,6 +46,36 @@ const CLUSTER_LAYER = "quarry-clusters";
 const CLUSTER_COUNT_LAYER = "quarry-cluster-count";
 const UNCLUSTERED_HALO_LAYER = "quarry-unclustered-halo";
 const UNCLUSTERED_LAYER = "quarry-unclustered-point";
+const SELECTED_RING_LAYER = "quarry-selected-ring";
+const QUARRY_LABEL_LAYER = "quarry-labels";
+
+/**
+ * District name lookup. The bundled TN GeoJSON stores the name in `NAME_2` — earlier code compared
+ * `["get","dtname"]`, a property that doesn't exist in the file, so the selected/hovered district
+ * never highlighted. Coalesce over the known spellings so alternate sources keep working.
+ */
+// `any` so it can be spliced into both paint (DataDrivenPropertyValueSpecification) and layout
+// (text-field) expressions without fighting MapLibre's generated expression types.
+const DISTRICT_NAME_EXPR: any = [
+  "coalesce",
+  ["get", "dtname"],
+  ["get", "NAME_2"],
+  ["get", "Dist_Name"],
+  ["get", "district"],
+  ["get", "name"],
+  "",
+];
+
+/** Frames the whole state — used on first load and whenever the district filter is cleared. */
+function frameTamilNadu(map: Pick<MapRef, "fitBounds">, duration: number) {
+  map.fitBounds(
+    [
+      [TN_BOUNDS.minLng, TN_BOUNDS.minLat],
+      [TN_BOUNDS.maxLng, TN_BOUNDS.maxLat],
+    ],
+    { padding: 44, duration }
+  );
+}
 
 interface HoveredQuarry {
   id: string;
@@ -83,20 +108,46 @@ STATUS_COLOR_MATCH.push("#6b7280"); // fallback
 export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: QuarryMapProps) {
   const mapRef = useRef<MapRef>(null);
   const selectQuarry = useDashboardStore((s) => s.selectQuarry);
+  const selectedQuarryId = useDashboardStore((s) => s.selectedQuarryId);
   const [hovered, setHovered] = useState<HoveredQuarry | null>(null);
   const [isStyleLoaded, setIsStyleLoaded] = useState(false);
 
   const geojson = useMemo(() => quarriesToGeoJSON(quarries), [quarries]);
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
 
+  // Read the current quarries inside the camera effect without re-running it on every
+  // 5-minute refresh — the camera should only move when the district selection changes.
+  const quarriesRef = useRef(quarries);
+  quarriesRef.current = quarries;
+
   useEffect(() => {
-    if (!mapRef.current) return;
-    if (selectedDistrict && DISTRICT_CENTERS[selectedDistrict as keyof typeof DISTRICT_CENTERS]) {
-      const center = DISTRICT_CENTERS[selectedDistrict as keyof typeof DISTRICT_CENTERS];
-      mapRef.current.flyTo({ center: [center.lng, center.lat], zoom: 8, duration: 1000 });
-    } else {
-      mapRef.current.flyTo({ center: [TN_CENTER.lng, TN_CENTER.lat], zoom: 6.0, duration: 1000 });
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (!selectedDistrict) {
+      frameTamilNadu(map, 900);
+      return;
     }
+
+    // Frame the district's actual quarries so individual pits separate out instead of
+    // staying stacked in one cluster at a fixed zoom.
+    const points = quarriesRef.current.filter((q) => q.district === selectedDistrict);
+    if (points.length > 0) {
+      const lngs = points.map((q) => q.lng);
+      const lats = points.map((q) => q.lat);
+      const pad = 0.04; // keeps a single-quarry district from zooming to street level
+      map.fitBounds(
+        [
+          [Math.min(...lngs) - pad, Math.min(...lats) - pad],
+          [Math.max(...lngs) + pad, Math.max(...lats) + pad],
+        ],
+        { padding: 64, maxZoom: 10.5, duration: 900 }
+      );
+      return;
+    }
+
+    const center = DISTRICT_CENTERS[selectedDistrict as keyof typeof DISTRICT_CENTERS];
+    if (center) map.flyTo({ center: [center.lng, center.lat], zoom: 9, duration: 900 });
   }, [selectedDistrict]);
 
   const handleClick = useCallback(
@@ -123,7 +174,18 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
 
       if (feature.layer?.id === UNCLUSTERED_LAYER) {
         const id = feature.properties?.id as string | undefined;
-        if (id) selectQuarry(id);
+        if (id) {
+          selectQuarry(id);
+          // Nudge the marker left of centre so the detail drawer doesn't cover it.
+          const [lng, lat] = (feature.geometry as Point).coordinates;
+          const map = mapRef.current;
+          map?.easeTo({
+            center: [lng, lat],
+            zoom: Math.max(map.getZoom(), 10),
+            offset: [-170, 0],
+            duration: 500,
+          });
+        }
         return;
       }
 
@@ -166,7 +228,7 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
   return (
     <div className="relative h-full w-full">
       {!isStyleLoaded && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-gold-50">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-canvas-deep">
           <Skeleton className="h-full w-full" />
         </div>
       )}
@@ -174,17 +236,23 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
         ref={mapRef}
         initialViewState={{ longitude: TN_CENTER.lng, latitude: TN_CENTER.lat, zoom: 6.0 }}
         maxBounds={[
-          [TN_BOUNDS.minLng - 3, TN_BOUNDS.minLat - 3], // South West
-          [TN_BOUNDS.maxLng + 3, TN_BOUNDS.maxLat + 3], // North East
+          [TN_BOUNDS.minLng - 0.6, TN_BOUNDS.minLat - 0.6], // South West
+          [TN_BOUNDS.maxLng + 0.6, TN_BOUNDS.maxLat + 0.6], // North East
         ] as any}
-        minZoom={5}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={minimalMapStyle}
+        mapStyle={BASEMAP_STYLE_URL}
         interactiveLayerIds={[CLUSTER_LAYER, UNCLUSTERED_LAYER, "tn-district-fill"]}
         onClick={handleClick}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoveredDistrict(null)}
-        onLoad={() => setIsStyleLoaded(true)}
+        onLoad={(e) => {
+          setIsStyleLoaded(true);
+          // Fill the frame with Tamil Nadu rather than a fixed zoom that leaves the state off-centre,
+          // then make that the furthest-out the map can go — the scale bar reads ~100 km there, and
+          // zooming further out would only reveal masked-off neighbouring states.
+          frameTamilNadu(e.target, 0);
+          e.target.setMinZoom(e.target.getZoom());
+        }}
         cursor={hovered || hoveredDistrict ? "pointer" : "grab"}
         attributionControl={{ compact: true }}
       >
@@ -192,6 +260,22 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
         <FullscreenControl position="top-right" />
         <GeolocateControl position="top-right" />
         <ScaleControl position="bottom-right" maxWidth={120} unit="metric" />
+
+        {/* Tamil Nadu only: everything outside the state is covered by the mask */}
+        <Source id="tn-mask" type="geojson" data={TN_MASK_GEOJSON_URL}>
+          <Layer
+            id="tn-mask-fill"
+            type="fill"
+            paint={{ "fill-color": "#e7eaf6", "fill-opacity": 1 }}
+          />
+        </Source>
+        <Source id="tn-outline" type="geojson" data={TN_OUTLINE_GEOJSON_URL}>
+          <Layer
+            id="tn-outline-line"
+            type="line"
+            paint={{ "line-color": "#2a2680", "line-width": 1.6, "line-opacity": 0.85 }}
+          />
+        </Source>
 
         {/* Real district boundaries */}
         <Source id={DISTRICTS_SOURCE_ID} type="geojson" data={TN_DISTRICTS_GEOJSON_URL}>
@@ -201,11 +285,11 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
             paint={{
               "fill-color": [
                 "case",
-                ["==", ["get", "dtname"], selectedDistrict || ""],
-                "rgba(239, 68, 68, 0.25)", // red-500 with opacity
-                ["==", ["get", "dtname"], hoveredDistrict || ""],
-                "rgba(248, 113, 113, 0.15)", // red-400 with opacity
-                "#ffffff" // white background for districts
+                ["==", DISTRICT_NAME_EXPR, selectedDistrict || "__none__"],
+                "rgba(91, 98, 236, 0.16)", // brand-500 selection wash
+                ["==", DISTRICT_NAME_EXPR, hoveredDistrict || "__none__"],
+                "rgba(91, 98, 236, 0.07)", // brand-400 hover wash
+                "rgba(255, 255, 255, 0)" // unselected districts stay clear so the basemap reads through
               ],
               "fill-outline-color": "transparent"
             }}
@@ -216,13 +300,13 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
             paint={{
               "line-color": [
                 "case",
-                ["==", ["get", "dtname"], selectedDistrict || ""],
-                "#ef4444", // Solid red-500 for selected
-                "#cbd5e1" // slate-300 default line color
+                ["==", DISTRICT_NAME_EXPR, selectedDistrict || "__none__"],
+                "#4a46dc", // brand-600 outline for the selected district
+                "#9aa3bf" // muted boundary over the basemap
               ],
               "line-width": [
                 "case",
-                ["==", ["get", "dtname"], selectedDistrict || ""],
+                ["==", DISTRICT_NAME_EXPR, selectedDistrict || "__none__"],
                 2,
                 1
               ],
@@ -234,15 +318,7 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
             id="tn-district-labels"
             type="symbol"
             layout={{
-              "text-field": [
-                "coalesce",
-                ["get", "dtname"],
-                ["get", "Dist_Name"],
-                ["get", "NAME_2"],
-                ["get", "district"],
-                ["get", "name"],
-                ""
-              ],
+              "text-field": DISTRICT_NAME_EXPR,
               "text-font": ["Noto Sans Bold"],
               "text-size": [
                 "interpolate",
@@ -256,15 +332,15 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
               "text-justify": "center"
             }}
             paint={{
-              "text-color": "#94a3b8", // slate-400
+              "text-color": "#8b93ad", // muted slate for district labels
               "text-halo-color": "#ffffff",
               "text-halo-width": 2,
               "text-halo-blur": 1,
               "text-opacity": [
                 "case",
-                ["==", ["get", "dtname"], selectedDistrict || ""],
+                ["==", DISTRICT_NAME_EXPR, selectedDistrict || "__none__"],
                 1,
-                ["==", ["get", "dtname"], hoveredDistrict || ""],
+                ["==", DISTRICT_NAME_EXPR, hoveredDistrict || "__none__"],
                 1,
                 0.8
               ]
@@ -272,7 +348,9 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
           />
         </Source>
 
-        <Source id={QUARRY_SOURCE_ID} type="geojson" data={geojson} cluster clusterMaxZoom={11} clusterRadius={50}>
+        {/* clusterMaxZoom/Radius kept low so quarries in one district break apart as soon as
+            the camera frames that district, rather than staying one lump */}
+        <Source id={QUARRY_SOURCE_ID} type="geojson" data={geojson} cluster clusterMaxZoom={9} clusterRadius={38}>
           {/* Soft drop-shadow beneath clusters for depth */}
           <Layer
             id={CLUSTER_SHADOW_LAYER}
@@ -291,10 +369,10 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
             type="circle"
             filter={["has", "point_count"]}
             paint={{
-              "circle-color": ["step", ["get", "point_count"], "#7A0C2E", 10, "#5C0A1E", 30, "#400715"],
+              "circle-color": ["step", ["get", "point_count"], "#5b62ec", 10, "#4a46dc", 30, "#2a2680"],
               "circle-radius": ["step", ["get", "point_count"], 16, 10, 20, 30, 26],
               "circle-stroke-width": 2,
-              "circle-stroke-color": "#D4A017",
+              "circle-stroke-color": "#d4a72c",
             }}
           />
           <Layer
@@ -326,6 +404,38 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
               "circle-stroke-color": "#ffffff",
             }}
           />
+          {/* Names appear once the camera is close enough for them to be readable */}
+          <Layer
+            id={QUARRY_LABEL_LAYER}
+            type="symbol"
+            filter={["!", ["has", "point_count"]]}
+            minzoom={9}
+            layout={{
+              "text-field": ["get", "name"],
+              "text-font": ["Noto Sans Bold"],
+              "text-size": 11,
+              "text-offset": [0, 1.4],
+              "text-anchor": "top",
+              "text-allow-overlap": false,
+            }}
+            paint={{
+              "text-color": "#1b1a4e",
+              "text-halo-color": "#ffffff",
+              "text-halo-width": 1.6,
+            }}
+          />
+          {/* Gold ring marks the quarry whose detail drawer is open */}
+          <Layer
+            id={SELECTED_RING_LAYER}
+            type="circle"
+            filter={["==", ["get", "id"], selectedQuarryId ?? "__none__"]}
+            paint={{
+              "circle-color": "transparent",
+              "circle-radius": 14,
+              "circle-stroke-width": 3,
+              "circle-stroke-color": "#d4a72c",
+            }}
+          />
         </Source>
 
         {hovered && (
@@ -346,33 +456,66 @@ export function QuarryMap({ quarries, selectedDistrict, onDistrictSelect }: Quar
           </Popup>
         )}
 
-        <MapLegend />
+        <MapLegend quarries={quarries} />
       </Map>
+
+      {/* Camera state chip — names the framed district and offers a way back to the state view */}
+      <div className="pointer-events-none absolute left-3 top-3 z-10 flex flex-wrap items-center gap-2">
+        <span className="glass-bar inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-900 shadow-card ring-1 ring-inset ring-neutral-border">
+          <MapPin className="h-3.5 w-3.5 text-brand-500" aria-hidden="true" />
+          {selectedDistrict ? `${selectedDistrict} district` : "Tamil Nadu · all districts"}
+        </span>
+        <span className="glass-bar inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-neutral-ink/60 shadow-card ring-1 ring-inset ring-neutral-border">
+          {quarries.length} quarries
+        </span>
+        {selectedDistrict && onDistrictSelect && (
+          <button
+            type="button"
+            onClick={() => onDistrictSelect(null)}
+            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-brand-900 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-card transition-colors hover:bg-brand-700"
+          >
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            Reset view
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
-function MapLegend() {
+function MapLegend({ quarries }: { quarries: Quarry[] }) {
+  const counts = useMemo(() => {
+    const tally = {} as Record<QuarryStatus, number>;
+    (Object.keys(STATUS_META) as QuarryStatus[]).forEach((status) => (tally[status] = 0));
+    quarries.forEach((q) => {
+      tally[q.status] = (tally[q.status] ?? 0) + 1;
+    });
+    return tally;
+  }, [quarries]);
+
   return (
-    <div className="absolute bottom-3 left-3 z-10 rounded-md border border-neutral-border bg-white/95 p-3 text-xs shadow-md backdrop-blur">
-      <p className="mb-1.5 flex items-center gap-1.5 font-semibold text-brand-900">
+    <div className="glass-bar absolute bottom-3 left-3 z-10 rounded-xl p-3 text-xs shadow-card ring-1 ring-inset ring-neutral-border">
+      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-neutral-ink/50">
         <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
-        Quarry Status
+        Quarry status
       </p>
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {(Object.keys(STATUS_META) as QuarryStatus[]).map((status) => (
-          <div key={status} className="flex items-center gap-1.5">
-            <span
-              className="inline-block h-2.5 w-2.5 rounded-full border border-white"
-              style={{ backgroundColor: STATUS_META[status].color }}
-            />
-            {STATUS_META[status].label}
+          <div key={status} className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-2 font-medium text-neutral-ink/75">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full ring-2 ring-inset ring-white/70"
+                style={{ backgroundColor: STATUS_META[status].color }}
+              />
+              {STATUS_META[status].label}
+            </span>
+            <span className="font-bold tabular-nums text-brand-900">{counts[status]}</span>
           </div>
         ))}
       </div>
-      <div className="mt-2 flex items-center gap-1.5 border-t border-neutral-border pt-1.5 text-neutral-ink/60">
+      <div className="mt-2.5 flex items-center gap-1.5 border-t border-neutral-line pt-2 text-[11px] text-neutral-ink/50">
         <Layers className="h-3 w-3" aria-hidden="true" />
-        District boundaries
+        Click a district to filter
       </div>
     </div>
   );

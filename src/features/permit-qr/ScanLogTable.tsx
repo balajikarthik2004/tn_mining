@@ -75,7 +75,7 @@ export function ScanLogTable({ scans }: Props) {
                 <td className="px-6 py-4 font-medium text-neutral-ink/70">{scan.scannedByOfficer}</td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm ${
-                    scan.result === "Valid" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"
+                    scan.result === "Valid" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"
                   }`}>
                     {scan.result === "Valid" ? <ShieldCheck className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
                     {scan.result}

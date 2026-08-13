@@ -104,7 +104,7 @@ export function LicenseRegistry({ licenses, quarries, operators }: Props) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-bold text-brand-900">{new Date(license.validUntil).toLocaleDateString("en-IN")}</div>
                     {license.daysToExpiry > 0 && license.daysToExpiry <= 90 && (
-                      <div className="text-xs text-orange-600 mt-0.5 font-bold uppercase tracking-wider">{license.daysToExpiry} days left</div>
+                      <div className="text-xs text-amber-600 mt-0.5 font-bold uppercase tracking-wider">{license.daysToExpiry} days left</div>
                     )}
                     {license.daysToExpiry < 0 && (
                       <div className="text-xs text-red-600 mt-0.5 font-bold uppercase tracking-wider">Expired {Math.abs(license.daysToExpiry)}d ago</div>
@@ -112,8 +112,8 @@ export function LicenseRegistry({ licenses, quarries, operators }: Props) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm ${
-                      license.status === "Active" ? "bg-green-50 text-green-700 border-green-200" :
-                      license.status === "Expiring Soon" ? "bg-orange-50 text-orange-700 border-orange-200" :
+                      license.status === "Active" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                      license.status === "Expiring Soon" ? "bg-amber-50 text-amber-700 border-amber-200" :
                       license.status === "Expired" ? "bg-neutral-100 text-neutral-ink/60 border-neutral-border" :
                       "bg-red-50 text-red-700 border-red-200"
                     }`}>

@@ -73,24 +73,26 @@ const INSPECTOR_NAMES = [
   "J. Muthu Kumar",
 ];
 
-const REAL_COORDINATES: Record<string, {lat: number, lng: number}[]> = {
-  Chennai: [{ lat: 12.966, lng: 80.169 }], // Trisulam
-  Kanchipuram: [{ lat: 12.966, lng: 80.169 }],
-  Madurai: [{ lat: 10.021, lng: 78.331 }], // Melur granite
-  Salem: [{ lat: 11.7122, lng: 78.1686 }], // Magnesite Chalk Hills
-  Ariyalur: [{ lat: 11.314, lng: 79.074 }], // Dalavoi Limestone
-  Tirunelveli: [{ lat: 8.805, lng: 77.731 }], // Sethurayanputhur Limestone
-  Coimbatore: [{ lat: 10.900, lng: 76.960 }], // Madukkarai
-  Tiruchirappalli: [{ lat: 10.985, lng: 78.940 }], // Dalmiapuram
-  Dindigul: [{ lat: 10.355, lng: 77.965 }], 
-  Karur: [{ lat: 10.984, lng: 77.887 }], // Thenilai Magnesite/Limestone
-  Villupuram: [{ lat: 11.930, lng: 79.480 }],
-  Vellore: [{ lat: 12.900, lng: 79.120 }],
-  Namakkal: [{ lat: 11.160, lng: 77.980 }],
-  Krishnagiri: [{ lat: 12.635, lng: 78.010 }],
-  Erode: [{ lat: 11.330, lng: 77.620 }],
-  Cuddalore: [{ lat: 11.562, lng: 79.505 }], // Neyveli Lignite
-  Thanjavur: [{ lat: 10.660, lng: 79.030 }]
+/**
+ * Real mining localities used to anchor a district's quarries somewhere plausible. Every entry is
+ * checked to fall inside its own district under the present-day (38-district) boundaries — the
+ * Chennai/Kanchipuram (Trisulam), Ariyalur (Dalavoi) and Thanjavur anchors were dropped or re-keyed
+ * when the 2019-20 reorganisation moved those points into Chengalpattu / Perambalur / Pudukkottai.
+ * Districts without an entry scatter around their interior point from DISTRICT_CENTERS instead.
+ */
+const REAL_COORDINATES: Record<string, { lat: number; lng: number; spread: number }[]> = {
+  Madurai: [{ lat: 10.021, lng: 78.331, spread: 0.05 }], // Melur granite
+  Salem: [{ lat: 11.7122, lng: 78.1686, spread: 0.05 }], // Magnesite Chalk Hills
+  Tirunelveli: [{ lat: 8.805, lng: 77.731, spread: 0.05 }], // Sethurayanputhur Limestone
+  Coimbatore: [{ lat: 10.9, lng: 76.96, spread: 0.05 }], // Madukkarai
+  Dindigul: [{ lat: 10.355, lng: 77.965, spread: 0.05 }],
+  Karur: [{ lat: 10.984, lng: 77.887, spread: 0.028 }], // Thenilai Magnesite/Limestone
+  Villupuram: [{ lat: 11.93, lng: 79.48, spread: 0.042 }],
+  Vellore: [{ lat: 12.9, lng: 79.12, spread: 0.048 }],
+  Namakkal: [{ lat: 11.16, lng: 77.98, spread: 0.046 }],
+  Krishnagiri: [{ lat: 12.635, lng: 78.01, spread: 0.05 }],
+  Erode: [{ lat: 11.33, lng: 77.62, spread: 0.05 }],
+  Cuddalore: [{ lat: 11.562, lng: 79.505, spread: 0.05 }], // Neyveli Lignite
 };
 
 function toISODate(date: Date): string {
@@ -121,8 +123,10 @@ function generateAll(): GeneratedData {
 
   // Give every district at least a couple of quarries, then fill the rest randomly
   // so the district filter and map clustering both have meaningful variety.
+  // One quarry per district first, then fill the rest at random — with 38 districts, seeding two
+  // each would overrun QUARRY_COUNT and leave the tail districts empty.
   const districtSequence: (typeof DISTRICTS)[number][] = [];
-  DISTRICTS.forEach((d) => districtSequence.push(d, d));
+  DISTRICTS.forEach((d) => districtSequence.push(d));
   while (districtSequence.length < QUARRY_COUNT) {
     districtSequence.push(pick(random, DISTRICTS));
   }
@@ -138,16 +142,18 @@ function generateAll(): GeneratedData {
     const district = districtSequence[i];
     const center = DISTRICT_CENTERS[district];
     
+    // Every scatter radius is bounded by the distance from its anchor to the district edge, so a
+    // quarry always falls inside the district it is labelled with. (A tighter ±0.001° (~100 m)
+    // spread used to stack a district's quarries onto one pixel — they never separated on the map.)
     let lat: number, lng: number;
     const realCoords = REAL_COORDINATES[district];
     if (realCoords && realCoords.length > 0) {
       const coord = pick(random, realCoords);
-      // Scatter points within the bounds of this specific massive quarry pit (approx ~100m)
-      lat = coord.lat + randomFloat(random, -0.001, 0.001);
-      lng = coord.lng + randomFloat(random, -0.001, 0.001);
+      lat = coord.lat + randomFloat(random, -coord.spread, coord.spread);
+      lng = coord.lng + randomFloat(random, -coord.spread, coord.spread);
     } else {
-      lat = center.lat + randomFloat(random, -0.35, 0.35);
-      lng = center.lng + randomFloat(random, -0.35, 0.35);
+      lat = center.lat + randomFloat(random, -center.jitter, center.jitter);
+      lng = center.lng + randomFloat(random, -center.jitter, center.jitter);
     }
 
     const mineralType = pickWeighted(random, MINERAL_WEIGHTS);

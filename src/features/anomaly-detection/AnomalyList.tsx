@@ -69,13 +69,13 @@ export function AnomalyList({ quarries }: Props) {
                   <div className="text-xs font-semibold text-slate-500 mt-0.5 uppercase tracking-wide">{anomaly.district} • {anomaly.mineralType}</div>
                 </td>
                 <td className="px-6 py-4 font-semibold text-slate-600">{anomaly.declaredExtractionVolumeM3Monthly.toLocaleString()}</td>
-                <td className="px-6 py-4 font-bold text-orange-600">{anomaly.aiEstimatedExtractionVolumeM3Monthly.toLocaleString()}</td>
+                <td className="px-6 py-4 font-bold text-amber-600">{anomaly.aiEstimatedExtractionVolumeM3Monthly.toLocaleString()}</td>
                 <td className="px-6 py-4 font-bold text-red-600">{Math.round(anomaly.gapTonnes).toLocaleString()} t</td>
                 <td className="px-6 py-4 text-slate-700 font-bold">{formatINR(anomaly.revenueLoss)}</td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                     anomaly.severity === "High" ? "bg-red-50 text-red-700 border border-red-200" :
-                    anomaly.severity === "Medium" ? "bg-orange-50 text-orange-700 border border-orange-200" :
+                    anomaly.severity === "Medium" ? "bg-amber-50 text-amber-700 border border-amber-200" :
                     "bg-amber-50 text-amber-700 border border-amber-200"
                   }`}>
                     <AlertTriangle className="w-3 h-3" />

@@ -225,7 +225,7 @@ export function AnomalyMap({ quarries }: Props) {
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-500">AI Estimated</span>
-                    <span className="font-bold text-orange-600">{hoveredQuarry.aiEstimatedExtractionVolumeM3Monthly.toLocaleString()} m³</span>
+                    <span className="font-bold text-amber-600">{hoveredQuarry.aiEstimatedExtractionVolumeM3Monthly.toLocaleString()} m³</span>
                   </div>
                   <div className="h-px bg-slate-200 w-full my-0.5"></div>
                   <div className="flex justify-between items-center text-xs font-bold text-red-600">

@@ -2,14 +2,20 @@ interface BrandMarkProps {
   className?: string;
 }
 
-/** Simple gopuram (temple tower) silhouette — echoes the favicon, reads as an official TN mark. */
+/**
+ * Gopuram (temple tower) silhouette — echoes the favicon, reads as an official TN mark.
+ * Drawn as one path with a doorway notch so it needs no background-matched cutout
+ * colour and works on any surface (light card or dark navy chrome).
+ */
 export function BrandMark({ className = "" }: BrandMarkProps) {
   return (
-    <svg viewBox="0 0 48 48" className={className} fill="none" aria-hidden="true">
-      <path d="M24 6 L31 17 H17 Z" fill="currentColor" />
-      <rect x="15" y="17" width="18" height="17" fill="currentColor" />
-      <rect x="20" y="23" width="8" height="11" fill="var(--brand-mark-cutout, #5C0A1E)" />
-      <rect x="12" y="34" width="24" height="4" rx="0.5" fill="currentColor" />
+    <svg viewBox="0 0 48 48" className={className} fill="currentColor" aria-hidden="true">
+      {/* crowning tier */}
+      <path d="M24 4 L32.5 16 H15.5 Z" />
+      {/* tower body with doorway notch */}
+      <path d="M14.5 18 H33.5 V34 H28 V24.5 H20 V34 H14.5 Z" />
+      {/* plinth */}
+      <rect x="11" y="35.5" width="26" height="4" rx="1.2" />
     </svg>
   );
 }

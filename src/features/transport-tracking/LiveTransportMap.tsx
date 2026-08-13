@@ -96,11 +96,11 @@ export function LiveTransportMap({ trips }: Props) {
         </h3>
         <div className="space-y-2 text-xs font-semibold">
           <div className="flex items-center gap-2 text-neutral-ink/70">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm border border-green-600/20"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm border border-emerald-600/20"></span>
             Valid e-Pass ({trips.filter(t => t.status === "Compliant").length})
           </div>
           <div className="flex items-center gap-2 text-neutral-ink/70">
-            <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm border border-orange-600/20"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm border border-amber-600/20"></span>
             Suspicious Route ({trips.filter(t => t.status === "Suspicious").length})
           </div>
           <div className="flex items-center gap-2 text-red-700">
@@ -146,8 +146,8 @@ export function LiveTransportMap({ trips }: Props) {
                 </div>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                   selectedTrip.status === "Illegal" ? "bg-red-50 text-red-700 border-red-200" :
-                  selectedTrip.status === "Suspicious" ? "bg-orange-50 text-orange-700 border-orange-200" :
-                  "bg-green-50 text-green-700 border-green-200"
+                  selectedTrip.status === "Suspicious" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                  "bg-emerald-50 text-emerald-700 border-emerald-200"
                 }`}>
                   {selectedTrip.status}
                 </span>
@@ -160,14 +160,14 @@ export function LiveTransportMap({ trips }: Props) {
                 </div>
                 <div className="flex justify-between items-center border-b border-neutral-border/50 pb-1.5">
                   <span className="text-neutral-ink/50 font-medium">e-Pass Status</span>
-                  <span className={`font-bold ${selectedTrip.permitStatus === 'Valid' ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`font-bold ${selectedTrip.permitStatus === 'Valid' ? 'text-emerald-600' : 'text-red-600'}`}>
                     {selectedTrip.permitStatus}
                   </span>
                 </div>
                 {selectedTrip.borderState && (
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-ink/50 font-medium">Approaching</span>
-                    <span className="font-bold text-orange-600 flex items-center gap-1">
+                    <span className="font-bold text-amber-600 flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" />
                       {selectedTrip.borderState}
                     </span>

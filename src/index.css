@@ -1,37 +1,124 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   TN Mining AI Platform — design tokens
+   Theme: "Deep Indigo & Saffron"
+     · brand-*  → Government chrome + interactive accent (indigo/navy family)
+     · gold-*   → Tamil Nadu saffron accent, chrome only (sidebar, seals, marks)
+     · status-* → semantic compliance colors, deliberately outside the brand hue
+   Never substitute a brand color for a status color or vice versa.
+   ========================================================================== */
+
 @theme {
-  /* Modern SaaS Minimal Palette */
-  --color-brand-900: #0f172a;
-  /* Slate 900 */
-  --color-brand-700: #334155;
-  /* Slate 700 */
-  --color-brand-50: #f8fafc;
-  /* Slate 50 */
+  /* --- Brand: indigo → navy. 400-600 are interactive, 800-950 are chrome. --- */
+  --color-brand-50: #eef1ff;
+  --color-brand-100: #e0e5ff;
+  --color-brand-200: #c6ceff;
+  --color-brand-300: #a3aefb;
+  --color-brand-400: #7f8bf6;
+  --color-brand-500: #5b62ec;
+  --color-brand-600: #4a46dc;
+  --color-brand-700: #3b34b0;
+  --color-brand-800: #2a2680;
+  --color-brand-900: #1b1a4e;
+  --color-brand-950: #0e0e2f;
 
-  --color-gold-500: #eab308;
-  --color-gold-300: #fde047;
-  --color-gold-50: #fefce8;
+  /* --- Saffron/brass gold: TN identity accent. Chrome only. --- */
+  --color-gold-50: #fff8e7;
+  --color-gold-100: #ffefc7;
+  --color-gold-300: #ffd166;
+  --color-gold-400: #edb63b;
+  --color-gold-500: #d4a72c;
+  --color-gold-600: #a97f1c;
 
-  --color-neutral-ink: #0f172a;
-  /* Slate 900 */
+  /* --- Neutrals: cool slate, tuned to sit under the indigo chrome. --- */
+  --color-neutral-ink: #0f1729;
   --color-neutral-surface: #ffffff;
-  --color-neutral-border: #e2e8f0;
-  /* Slate 200 */
+  --color-neutral-subtle: #f7f8fd;
+  --color-neutral-border: #e4e8f2;
+  --color-neutral-line: #eef1f7;
 
-  /* Status colors — semantic, kept visually distinct from brand */
+  /* Page canvas (behind cards) */
+  --color-canvas: #f4f6fd;
+  --color-canvas-deep: #eceffa;
+
+  /* --- Status colors — semantic, kept visually distinct from brand --- */
   --color-status-compliant: #10b981;
   /* Emerald 500 */
   --color-status-warning: #f59e0b;
-  /* Amber 500 */
+  /* Amber 500 — orange-leaning so it never reads as brass gold */
   --color-status-violation: #ef4444;
   /* Red 500 */
   --color-status-expired: #64748b;
   /* Slate 500 */
 
-  --font-sans: "Roboto", system-ui, -apple-system, sans-serif;
-  --font-heading: "Montserrat", system-ui, -apple-system, sans-serif;
+  /* --- Typography --- */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* --- Elevation: soft, indigo-tinted shadows instead of grey ones --- */
+  --shadow-card: 0 1px 2px rgb(15 23 41 / 0.04), 0 6px 20px -8px rgb(27 26 78 / 0.1);
+  --shadow-card-hover: 0 2px 4px rgb(15 23 41 / 0.05), 0 16px 36px -12px rgb(27 26 78 / 0.22);
+  --shadow-panel: 0 24px 60px -20px rgb(14 14 47 / 0.35);
+  --shadow-inset-soft: inset 0 1px 0 rgb(255 255 255 / 0.6);
+
+  /* --- Motion --- */
+  --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.3s ease-out both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -150% 0;
+  }
+
+  to {
+    background-position: 250% 0;
+  }
+}
+
+@keyframes pulse-ring {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.45;
+    transform: scale(1.35);
+  }
+}
+
+/* ============================================================================
+   Base
+   ========================================================================== */
 
 html,
 body,
@@ -39,10 +126,18 @@ body,
   height: 100%;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background-color: var(--color-brand-50);
+  background-color: var(--color-canvas);
   color: var(--color-neutral-ink);
   font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1,
@@ -53,11 +148,168 @@ h5,
 h6,
 .font-heading {
   font-family: var(--font-heading);
+  letter-spacing: -0.018em;
 }
 
-/* MapLibre GL popup styling (imported here since we don't have a separate global stylesheet entry) */
+h1 {
+  letter-spacing: -0.026em;
+}
+
+::selection {
+  background-color: var(--color-brand-200);
+  color: var(--color-brand-900);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* Slim, unobtrusive scrollbars everywhere */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(27 26 78 / 0.18) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgb(27 26 78 / 0.16);
+  border: 3px solid transparent;
+  border-radius: 9999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(27 26 78 / 0.3);
+  background-clip: content-box;
+}
+
+/* Dark surfaces (sidebar, night-mining panels) get a light-on-dark scrollbar */
+.scrollbar-light {
+  scrollbar-color: rgb(255 255 255 / 0.24) transparent;
+}
+
+.scrollbar-light::-webkit-scrollbar-thumb {
+  background-color: rgb(255 255 255 / 0.22);
+  background-clip: content-box;
+}
+
+/* ============================================================================
+   Shared utilities (declared as @utility so Tailwind classes still override)
+   ========================================================================== */
+
+/* Page canvas with a subtle indigo wash — used by every feature page root. */
+@utility page-canvas {
+  background-color: var(--color-canvas);
+  background-image:
+    radial-gradient(60rem 40rem at 100% -10%, rgb(91 98 236 / 0.07), transparent 60%),
+    radial-gradient(50rem 34rem at -10% 0%, rgb(212 167 44 / 0.06), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* Standard white surface: soft ring + tinted elevation. */
+@utility surface-card {
+  background-color: var(--color-neutral-surface);
+  border-radius: 1rem;
+  box-shadow:
+    0 0 0 1px var(--color-neutral-border),
+    var(--shadow-card);
+}
+
+/* Frosted header/overlay bar. */
+@utility glass-bar {
+  background-color: rgb(255 255 255 / 0.78);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+}
+
+/* Deep navy chrome with an indigo sheen — sidebar, hero strips. */
+@utility chrome-deep {
+  background-image:
+    radial-gradient(38rem 26rem at 12% -8%, rgb(91 98 236 / 0.4), transparent 62%),
+    radial-gradient(26rem 22rem at 100% 108%, rgb(212 167 44 / 0.16), transparent 60%),
+    linear-gradient(180deg, var(--color-brand-900) 0%, var(--color-brand-950) 100%);
+}
+
+/* Indigo → saffron text wash for hero numbers/titles. */
+@utility text-gradient-brand {
+  background-image: linear-gradient(100deg, var(--color-brand-700), var(--color-brand-500) 55%, var(--color-gold-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Loading shimmer (Skeleton). */
+@utility shimmer {
+  background-image: linear-gradient(90deg,
+      var(--color-canvas-deep) 0%,
+      #ffffff 45%,
+      var(--color-canvas-deep) 90%);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+@utility hide-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   Third-party overrides
+   ========================================================================== */
+
+/* MapLibre GL */
 .maplibregl-popup-content {
   padding: 0;
-  border-radius: 0.5rem;
+  border-radius: 0.875rem;
   overflow: hidden;
+  box-shadow: var(--shadow-panel);
+  font-family: var(--font-sans);
+}
+
+.maplibregl-popup-close-button {
+  padding: 0 0.35rem;
+  color: var(--color-neutral-ink);
+  opacity: 0.5;
+  font-size: 1rem;
+}
+
+.maplibregl-popup-close-button:hover {
+  background: transparent;
+  opacity: 1;
+}
+
+.maplibregl-ctrl-group {
+  border-radius: 0.75rem !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-card) !important;
+  border: 1px solid var(--color-neutral-border);
+}
+
+.maplibregl-ctrl-group button+button {
+  border-top-color: var(--color-neutral-line);
+}
+
+/* Recharts: quieter grid + branded tooltip */
+.recharts-cartesian-grid line {
+  stroke: var(--color-neutral-line);
+}
+
+.recharts-default-tooltip {
+  border-radius: 0.75rem !important;
+  border: 1px solid var(--color-neutral-border) !important;
+  box-shadow: var(--shadow-card) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.8125rem !important;
 }

@@ -86,7 +86,7 @@ export function NightMiningMap({ alerts }: Props) {
             >
               <div className="relative group cursor-pointer z-10">
                 <div className="absolute -inset-6 bg-red-500/30 rounded-full blur-md animate-pulse"></div>
-                <div className="absolute -inset-3 bg-orange-500/40 rounded-full animate-ping"></div>
+                <div className="absolute -inset-3 bg-amber-500/40 rounded-full animate-ping"></div>
                 
                 <div className="relative w-6 h-6 bg-red-950 border-[2px] border-red-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(239,68,68,0.6)]">
                   <Flame className="w-3.5 h-3.5 text-red-400" />

@@ -28,7 +28,7 @@ export function QuarryRoyaltyDetailPage() {
   const totalReminders = records.reduce((acc, r) => acc + r.remindersSent, 0);
 
   return (
-    <div className="flex flex-col h-full bg-gold-50 overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="shrink-0 bg-white border-b border-neutral-border px-4 py-3 sm:px-6 sm:py-4 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between gap-4 z-10 relative">
         <div className="flex items-start gap-4">
@@ -45,7 +45,7 @@ export function QuarryRoyaltyDetailPage() {
                    <AlertTriangle className="w-3.5 h-3.5" /> Defaulter
                  </span>
               ) : (
-                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-green-50 text-green-700 border border-green-200 shadow-sm">
+                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
                    Compliant
                  </span>
               )}
@@ -81,9 +81,9 @@ export function QuarryRoyaltyDetailPage() {
                       <div className="flex justify-between items-center mb-6 pb-4 border-b border-neutral-border border-dashed">
                         <span className="font-black text-brand-900 uppercase tracking-widest">{new Date(r.month + "-01").toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
                         <span className={`px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest border shadow-sm ${
-                           r.status === "Paid" ? "bg-green-50 text-green-700 border-green-200" :
+                           r.status === "Paid" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
                            r.status === "Overdue" ? "bg-red-50 text-red-700 border-red-200" :
-                           "bg-orange-50 text-orange-700 border-orange-200"
+                           "bg-amber-50 text-amber-700 border-amber-200"
                         }`}>{r.status}</span>
                       </div>
                       
@@ -110,11 +110,11 @@ export function QuarryRoyaltyDetailPage() {
 
                         <div>
                           <div className="flex justify-between text-[11px] font-black uppercase tracking-widest mb-2">
-                            <span className={r.paidRoyalty >= r.expectedRoyalty ? "text-green-700" : "text-orange-600"}>Actually Paid</span>
-                            <span className={r.paidRoyalty >= r.expectedRoyalty ? "text-green-700" : "text-orange-600"}>{formatINR(r.paidRoyalty)}</span>
+                            <span className={r.paidRoyalty >= r.expectedRoyalty ? "text-emerald-700" : "text-amber-600"}>Actually Paid</span>
+                            <span className={r.paidRoyalty >= r.expectedRoyalty ? "text-emerald-700" : "text-amber-600"}>{formatINR(r.paidRoyalty)}</span>
                           </div>
                           <div className="w-full bg-neutral-surface rounded-full h-2 border border-neutral-border">
-                            <div className={`h-2 rounded-full ${r.paidRoyalty >= r.expectedRoyalty ? "bg-green-500" : "bg-orange-500"}`} style={{ width: `${Math.min((r.paidRoyalty / r.expectedRoyalty) * 100, 100)}%` }}></div>
+                            <div className={`h-2 rounded-full ${r.paidRoyalty >= r.expectedRoyalty ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${Math.min((r.paidRoyalty / r.expectedRoyalty) * 100, 100)}%` }}></div>
                           </div>
                         </div>
                       </div>

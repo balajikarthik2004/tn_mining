@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { QrCode } from "lucide-react";
 import { getMockPermitData } from "../../data/mock/permitData";
 import { ValidationDashboard } from "./ValidationDashboard";
 import { FakePermitMap } from "./FakePermitMap";
@@ -12,37 +11,25 @@ export function PermitQrPage() {
   const [scans, setScans] = useState<ScanEvent[]>(initialScans);
 
   const handleNewScan = useCallback((newScan: ScanEvent) => {
-    setScans(prev => [newScan, ...prev]);
+    setScans((prev) => [newScan, ...prev]);
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-gold-50 overflow-y-auto p-4 md:p-6 gap-6">
-      <div className="shrink-0 flex items-center justify-between border-b border-neutral-border pb-4">
-        <div>
-          <h1 className="text-xl md:text-2xl font-black text-brand-900 tracking-tight flex items-center gap-2">
-            <QrCode className="w-6 h-6 text-brand-500" />
-            Field Enforcement: QR Scanner
-          </h1>
-          <p className="text-sm font-medium text-neutral-ink/60 mt-1">
-            Instantly verify encrypted transport permits, enforce quantity controls, and track forged permit attempts.
-          </p>
-        </div>
-      </div>
-
+    <div className="flex h-full flex-col gap-5 overflow-y-auto p-4 md:p-6">
       <div className="shrink-0">
         <ValidationDashboard scans={scans} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 flex flex-col min-h-[500px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="flex min-h-[500px] flex-col lg:col-span-1">
           <QRScannerSimulator permits={permits} onScanResult={handleNewScan} />
         </div>
-        <div className="lg:col-span-2 flex flex-col min-h-[500px]">
+        <div className="flex min-h-[500px] flex-col lg:col-span-2">
           <FakePermitMap scans={scans} />
         </div>
       </div>
-      
-      <div className="pb-6">
+
+      <div className="pb-2">
         <ScanLogTable scans={scans} />
       </div>
     </div>

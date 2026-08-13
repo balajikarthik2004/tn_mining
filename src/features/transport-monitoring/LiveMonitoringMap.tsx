@@ -79,8 +79,8 @@ export function LiveMonitoringMap({ trips }: Props) {
             <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm border border-blue-600/20"></span>
             In Transit ({activeTrips.filter(t => t.status === "In Transit").length})
           </div>
-          <div className="flex items-center gap-2 text-orange-700">
-            <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm border border-orange-600/20 animate-pulse"></span>
+          <div className="flex items-center gap-2 text-amber-700">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm border border-amber-600/20 animate-pulse"></span>
             Suspicious/Route Deviation ({activeTrips.filter(t => t.status === "Suspicious").length})
           </div>
           <div className="flex items-center gap-2 text-red-700">
@@ -171,7 +171,7 @@ export function LiveMonitoringMap({ trips }: Props) {
                 </div>
                 <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${
                   selectedTrip.status === "In Transit" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                  selectedTrip.status === "Suspicious" ? "bg-orange-50 text-orange-700 border-orange-200" :
+                  selectedTrip.status === "Suspicious" ? "bg-amber-50 text-amber-700 border-amber-200" :
                   "bg-red-50 text-red-700 border-red-200"
                 }`}>
                   {selectedTrip.status}

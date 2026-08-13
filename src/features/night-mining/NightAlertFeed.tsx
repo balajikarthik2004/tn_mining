@@ -12,7 +12,7 @@ export function NightAlertFeed({ alerts }: Props) {
     <div className="bg-white border border-neutral-border rounded-2xl shadow-sm flex flex-col h-full">
       <div className="p-3 sm:px-4 border-b border-neutral-border flex justify-between items-center bg-neutral-surface rounded-t-2xl shrink-0">
         <h3 className="font-bold text-sm text-brand-900 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-orange-500" /> Recent Night Detections
+          <AlertTriangle className="w-4 h-4 text-amber-500" /> Recent Night Detections
         </h3>
         <span className="bg-red-50 text-red-700 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-red-200 shadow-sm">
           {alerts.filter(a => a.status === "Active" || a.status === "Escalated").length} Active
@@ -33,7 +33,7 @@ export function NightAlertFeed({ alerts }: Props) {
                     <span className={`text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border ${
                       alert.status === "Escalated" ? "bg-purple-50 text-purple-700 border-purple-200" :
                       alert.status === "Active" ? "bg-red-50 text-red-700 border-red-200" :
-                      "bg-green-50 text-green-700 border-green-200"
+                      "bg-emerald-50 text-emerald-700 border-emerald-200"
                     }`}>{alert.status}</span>
                   </div>
                   <p className="text-xs font-bold text-neutral-ink/60 mt-1.5 uppercase tracking-wide">

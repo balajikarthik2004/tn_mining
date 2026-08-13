@@ -29,7 +29,7 @@ export function NightAlertDetailPage() {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-gold-50 overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="shrink-0 bg-white border-b border-neutral-border px-4 py-3 sm:px-6 sm:py-4 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between gap-4 z-10 relative">
         <div className="flex items-start gap-4">
@@ -44,7 +44,7 @@ export function NightAlertDetailPage() {
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm ${
                 alert.status === "Escalated" ? "bg-purple-50 text-purple-700 border-purple-200" :
                 alert.status === "Active" ? "bg-red-50 text-red-700 border-red-200" :
-                "bg-green-50 text-green-700 border-green-200"
+                "bg-emerald-50 text-emerald-700 border-emerald-200"
               }`}>
                 {alert.status}
               </span>
@@ -152,12 +152,12 @@ export function NightAlertDetailPage() {
                           <div className="relative z-10 shrink-0 bg-white py-1">
                             {logEntry ? (
                               logEntry.acknowledged ? (
-                                <div className="w-8 h-8 rounded-full bg-green-50 border-2 border-green-500 flex items-center justify-center shadow-sm">
-                                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                <div className="w-8 h-8 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center shadow-sm">
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                                 </div>
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-orange-50 border-2 border-orange-500 flex items-center justify-center animate-pulse shadow-sm">
-                                  <ShieldAlert className="w-4 h-4 text-orange-600" />
+                                <div className="w-8 h-8 rounded-full bg-amber-50 border-2 border-amber-500 flex items-center justify-center animate-pulse shadow-sm">
+                                  <ShieldAlert className="w-4 h-4 text-amber-600" />
                                 </div>
                               )
                             ) : (
@@ -172,9 +172,9 @@ export function NightAlertDetailPage() {
                               <div className="mt-2 space-y-1.5 p-3 rounded-lg border border-neutral-border bg-neutral-surface">
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-ink/50">Alerted: {formatDateTime(logEntry.timestamp)}</p>
                                 {logEntry.acknowledged ? (
-                                  <p className="text-[10px] font-bold uppercase tracking-widest text-green-700">Ack'd by: {logEntry.acknowledgedBy} at {logEntry.acknowledgedAt && formatDateTime(logEntry.acknowledgedAt)}</p>
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Ack'd by: {logEntry.acknowledgedBy} at {logEntry.acknowledgedAt && formatDateTime(logEntry.acknowledgedAt)}</p>
                                 ) : (
-                                  <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600 animate-pulse">Pending acknowledgement</p>
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 animate-pulse">Pending acknowledgement</p>
                                 )}
                               </div>
                             )}

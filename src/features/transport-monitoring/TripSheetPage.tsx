@@ -26,7 +26,7 @@ export function TripSheetPage() {
     Navigation2;
 
   const statusColor = 
-    trip.status === "Delivered" ? "bg-green-50 text-green-700 border-green-200" :
+    trip.status === "Delivered" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
     trip.status === "Suspicious" || trip.status === "Overdue" ? "bg-red-50 text-red-700 border-red-200" :
     "bg-blue-50 text-blue-700 border-blue-200";
 
@@ -116,7 +116,7 @@ export function TripSheetPage() {
                    <div className="absolute top-0 right-0 w-8 h-8 bg-neutral-100 rounded-bl-full -mr-2 -mt-2"></div>
                   <span className="block text-[10px] font-bold text-neutral-ink/50 uppercase tracking-widest">Loading Weight</span>
                   <span className="block mt-2 text-3xl font-black text-brand-900">{trip.loadingWeightTonnes} t</span>
-                  <span className="flex items-center gap-1 mt-2 text-[10px] font-bold text-green-600 bg-green-50 w-max px-1.5 py-0.5 rounded uppercase border border-green-100">
+                  <span className="flex items-center gap-1 mt-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 w-max px-1.5 py-0.5 rounded uppercase border border-emerald-100">
                     <Check className="w-3 h-3" /> Verified at Source
                   </span>
                 </div>
@@ -127,11 +127,11 @@ export function TripSheetPage() {
                     {trip.deliveryWeightTonnes ? `${trip.deliveryWeightTonnes} t` : "--"}
                   </span>
                   {trip.deliveryWeightTonnes ? (
-                    <span className="flex items-center gap-1 mt-2 text-[10px] font-bold text-green-600 bg-green-50 w-max px-1.5 py-0.5 rounded uppercase border border-green-100">
+                    <span className="flex items-center gap-1 mt-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 w-max px-1.5 py-0.5 rounded uppercase border border-emerald-100">
                       <Check className="w-3 h-3" /> Verified at Dest
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 mt-2 text-[10px] font-bold text-orange-600 bg-orange-50 w-max px-1.5 py-0.5 rounded uppercase border border-orange-100">
+                    <span className="flex items-center gap-1 mt-2 text-[10px] font-bold text-amber-600 bg-amber-50 w-max px-1.5 py-0.5 rounded uppercase border border-amber-100">
                       Pending
                     </span>
                   )}
@@ -140,14 +140,14 @@ export function TripSheetPage() {
                 <div className={`p-5 rounded-lg border ${
                    trip.deliveryWeightTonnes 
                    ? Math.abs(trip.loadingWeightTonnes - trip.deliveryWeightTonnes) > (trip.loadingWeightTonnes * 0.05)
-                     ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"
+                     ? "bg-red-50 border-red-200" : "bg-emerald-50 border-emerald-200"
                    : "bg-neutral-surface border-neutral-border"
                 }`}>
                   <span className="block text-[10px] font-bold text-neutral-ink/50 uppercase tracking-widest">Discrepancy</span>
                   <span className={`block mt-2 text-3xl font-black ${
                     trip.deliveryWeightTonnes 
                       ? Math.abs(trip.loadingWeightTonnes - trip.deliveryWeightTonnes) > (trip.loadingWeightTonnes * 0.05)
-                        ? "text-red-700" : "text-green-700"
+                        ? "text-red-700" : "text-emerald-700"
                       : "text-neutral-ink/40"
                   }`}>
                     {trip.deliveryWeightTonnes 
@@ -219,7 +219,7 @@ export function TripSheetPage() {
             <div className="p-6 space-y-4">
               <div className="flex items-center justify-between p-4 bg-neutral-surface rounded-lg border border-neutral-border">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-50 rounded-lg border border-green-100 text-green-600"><CheckCircle2 className="w-4 h-4" /></div>
+                  <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-100 text-emerald-600"><CheckCircle2 className="w-4 h-4" /></div>
                   <div>
                     <p className="text-sm font-bold text-brand-900">Digital Scans Passed</p>
                     <p className="text-xs font-medium text-neutral-ink/60">{trip.checkpostsPassed} automated checkpoints</p>
@@ -228,7 +228,7 @@ export function TripSheetPage() {
               </div>
               <div className="flex items-center justify-between p-4 bg-neutral-surface rounded-lg border border-neutral-border">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg border ${trip.status === "Delivered" ? "bg-green-50 border-green-100 text-green-600" : "bg-blue-50 border-blue-100 text-blue-600"}`}>
+                  <div className={`p-2 rounded-lg border ${trip.status === "Delivered" ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-blue-50 border-blue-100 text-blue-600"}`}>
                     <Clock className="w-4 h-4" />
                   </div>
                   <div>

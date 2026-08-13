@@ -73,8 +73,8 @@ export function TransportAlertDetailPage() {
               <h1 className="text-2xl md:text-3xl font-bold text-brand-900">Vehicle {trip.vehicleNumber}</h1>
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${
                 trip.status === "Illegal" ? "bg-red-50 text-red-700 border-red-200" :
-                trip.status === "Suspicious" ? "bg-orange-50 text-orange-700 border-orange-200" :
-                "bg-green-50 text-green-700 border-green-200"
+                trip.status === "Suspicious" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                "bg-emerald-50 text-emerald-700 border-emerald-200"
               }`}>
                 {trip.status === "Illegal" ? <ShieldAlert className="w-3.5 h-3.5" /> : trip.status === "Suspicious" ? <AlertTriangle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                 {trip.status === "Illegal" ? "Illegal Transport" : trip.status === "Suspicious" ? "Suspicious Route" : "Compliant"}
@@ -110,7 +110,7 @@ export function TransportAlertDetailPage() {
                   Declared
                 </div>
                 <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-ink/70">
-                  <div className={`w-3 h-1 ${trip.status === 'Illegal' ? 'bg-red-500' : 'bg-orange-500'}`}></div>
+                  <div className={`w-3 h-1 ${trip.status === 'Illegal' ? 'bg-red-500' : 'bg-amber-500'}`}></div>
                   Actual
                 </div>
               </div>
@@ -156,8 +156,8 @@ export function TransportAlertDetailPage() {
                   latitude={trip.currentLocation.lat}
                   anchor="center"
                 >
-                  <div className={`bg-white border-2 rounded-full p-1.5 shadow-md flex items-center justify-center transition-transform hover:scale-110 ${trip.status === 'Illegal' ? 'border-red-500' : 'border-orange-500'}`}>
-                    <Crosshair className={`w-3.5 h-3.5 ${trip.status === 'Illegal' ? 'text-red-500' : 'text-orange-500'}`} />
+                  <div className={`bg-white border-2 rounded-full p-1.5 shadow-md flex items-center justify-center transition-transform hover:scale-110 ${trip.status === 'Illegal' ? 'border-red-500' : 'border-amber-500'}`}>
+                    <Crosshair className={`w-3.5 h-3.5 ${trip.status === 'Illegal' ? 'text-red-500' : 'text-amber-500'}`} />
                   </div>
                 </Marker>
               </Map>
@@ -181,7 +181,7 @@ export function TransportAlertDetailPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Actual Heading</span>
-                  <span className="font-bold text-orange-600">{trip.borderState} Border</span>
+                  <span className="font-bold text-amber-600">{trip.borderState} Border</span>
                 </div>
                 {trip.crossingTimestamp && (
                   <div className="flex justify-between items-center">
@@ -200,7 +200,7 @@ export function TransportAlertDetailPage() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="font-medium text-neutral-ink/70">ANPR Scan Status</span>
-                  <span className="font-bold text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Matched</span>
+                  <span className="font-bold text-emerald-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Matched</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="font-medium text-neutral-ink/70">RFID FASTag</span>
@@ -209,7 +209,7 @@ export function TransportAlertDetailPage() {
                 <div className="flex justify-between items-center pt-2 mt-2 border-t border-neutral-border/50">
                   <span className="font-medium text-neutral-ink/70">e-Pass Validation</span>
                   <div className="flex flex-col items-end">
-                     <span className={`font-black ${trip.permitStatus === 'Valid' ? 'text-green-600' : 'text-red-600'}`}>
+                     <span className={`font-black ${trip.permitStatus === 'Valid' ? 'text-emerald-600' : 'text-red-600'}`}>
                       {trip.permitStatus}
                     </span>
                     {trip.permitStatus !== "Valid" && (

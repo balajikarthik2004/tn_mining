@@ -46,9 +46,9 @@ export function TransportDashboard({ trips }: Props) {
 
       <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
         <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-          <CheckCircle2 className="w-4 h-4 text-green-500" /> Delivered
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Delivered
         </h3>
-        <p className="text-3xl font-black text-green-600">{stats.completed}</p>
+        <p className="text-3xl font-black text-emerald-600">{stats.completed}</p>
         <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Verified unloading</p>
       </div>
 

@@ -3,52 +3,48 @@ import { TransportMonitoringPage } from "../transport-monitoring/TransportMonito
 import { TransportTrackingPage } from "../transport-tracking/TransportTrackingPage";
 import { Truck, ScanLine } from "lucide-react";
 
+const TABS = [
+  { id: "internal", label: "Internal Monitoring", icon: ScanLine },
+  { id: "border", label: "Border Enforcement", icon: Truck },
+] as const;
+
 export function TransportHubPage() {
   const [activeTab, setActiveTab] = useState<"internal" | "border">("internal");
 
   return (
-    <div className="flex flex-col h-full bg-gold-50 overflow-hidden">
-      {/* Global Transport Hub Header / Tab Bar */}
-      <div className="shrink-0 bg-white border-b border-neutral-border px-4 py-3 sm:px-6 sm:py-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10 relative">
-        <div>
-          <h1 className="text-xl font-black text-brand-900 tracking-tight">Transport Command Center</h1>
-          <p className="text-xs font-bold text-neutral-ink/50 uppercase tracking-widest mt-0.5">Unified Logistics & Enforcement</p>
-        </div>
-        
-        {/* Toggle Buttons */}
-        <div className="flex items-center bg-neutral-surface border border-neutral-border p-1 rounded-lg">
-          <button
-            onClick={() => setActiveTab("internal")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${
-              activeTab === "internal" 
-                ? "bg-white text-brand-900 shadow-sm border border-neutral-border/50" 
-                : "text-neutral-ink/60 hover:text-brand-900 hover:bg-neutral-50"
-            }`}
-          >
-            <ScanLine className="w-4 h-4" />
-            Internal Monitoring
-          </button>
-          <button
-            onClick={() => setActiveTab("border")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${
-              activeTab === "border" 
-                ? "bg-white text-brand-900 shadow-sm border border-neutral-border/50" 
-                : "text-neutral-ink/60 hover:text-brand-900 hover:bg-neutral-50"
-            }`}
-          >
-            <Truck className="w-4 h-4" />
-            Border Enforcement
-          </button>
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Hub bar: segmented module switcher */}
+      <div className="glass-bar relative z-10 flex shrink-0 items-center border-b border-neutral-border px-4 py-3 sm:px-6">
+        <div
+          role="tablist"
+          aria-label="Transport modules"
+          className="flex items-center gap-1 rounded-xl bg-canvas-deep/80 p-1 ring-1 ring-inset ring-neutral-border"
+        >
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all duration-200 ${isActive
+                  ? "bg-neutral-surface text-brand-900 shadow-card ring-1 ring-inset ring-neutral-border"
+                  : "text-neutral-ink/55 hover:text-brand-800"
+                  }`}
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Render the selected module */}
-      <div className="flex-1 min-h-0 overflow-hidden relative">
-        {activeTab === "internal" ? (
-          <TransportMonitoringPage />
-        ) : (
-          <TransportTrackingPage />
-        )}
+      {/* Selected module */}
+      <div key={activeTab} className="relative min-h-0 flex-1 animate-fade-in overflow-hidden">
+        {activeTab === "internal" ? <TransportMonitoringPage /> : <TransportTrackingPage />}
       </div>
     </div>
   );

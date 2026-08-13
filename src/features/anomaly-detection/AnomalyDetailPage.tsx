@@ -145,7 +145,7 @@ export function AnomalyDetailPage() {
               <h1 className="text-2xl md:text-3xl font-bold text-brand-900">{quarry.name}</h1>
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${
                 anomalyData.severity === "High" ? "bg-red-50 text-red-700 border-red-200" :
-                anomalyData.severity === "Medium" ? "bg-orange-50 text-orange-700 border-orange-200" :
+                anomalyData.severity === "Medium" ? "bg-amber-50 text-amber-700 border-amber-200" :
                 "bg-amber-50 text-amber-700 border-amber-200"
               }`}>
                 <AlertTriangle className="w-3.5 h-3.5" />
@@ -192,16 +192,16 @@ export function AnomalyDetailPage() {
             </div>
             
             <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-orange-50/50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+              <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50/50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-sm font-semibold text-neutral-ink/60 uppercase tracking-wide">AI Volumetric Gap</h3>
                 <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 </span>
               </div>
-              <p className="text-2xl font-bold text-orange-600">+{Math.round(anomalyData.gapTonnes).toLocaleString()} <span className="text-sm font-semibold text-orange-500/70">tonnes</span></p>
-              <p className="text-xs font-semibold text-orange-600/80 mt-1">({gapPercentage}% deviation)</p>
+              <p className="text-2xl font-bold text-amber-600">+{Math.round(anomalyData.gapTonnes).toLocaleString()} <span className="text-sm font-semibold text-amber-500/70">tonnes</span></p>
+              <p className="text-xs font-semibold text-amber-600/80 mt-1">({gapPercentage}% deviation)</p>
             </div>
 
             <div className="bg-red-50 border border-red-100 rounded-xl p-5 shadow-sm relative overflow-hidden">
@@ -228,7 +228,7 @@ export function AnomalyDetailPage() {
               </div>
               <div className="flex gap-4">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-ink/70">
-                  <div className="w-3 h-3 rounded-full border-2 border-green-500 bg-green-500/10"></div>
+                  <div className="w-3 h-3 rounded-full border-2 border-emerald-500 bg-emerald-500/10"></div>
                   Approved Lease
                 </div>
                 <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-ink/70">

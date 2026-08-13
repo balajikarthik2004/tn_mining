@@ -22,6 +22,42 @@ detail before extending Feature 1 or starting Feature 2+.
 - Zustand for the dashboard filter/search/selection store
 - Recharts + date-fns installed for later features (not yet used by Feature 1)
 - lucide-react for all iconography (nav, stat cards, side panel, buttons) — no emoji in the UI
+- Fonts (Google Fonts, loaded in `index.html`): **Plus Jakarta Sans** for headings (`font-heading`,
+  applied automatically to `h1`–`h6`), **Inter** for body/UI, **JetBrains Mono** (`font-mono`) for
+  ids/licence numbers
+
+## Design system — "Deep Indigo & Saffron"
+
+All tokens live in the `@theme` block of `src/index.css`; use the token classes, not raw hex or
+one-off `slate-*`/`sky-*` values, so a future retheme is a one-file change.
+
+| Token family | Values | Use for |
+| --- | --- | --- |
+| `brand-50…950` | indigo → navy | chrome (sidebar `chrome-deep`, headings `text-brand-900`), interactive accent (`brand-500/600`), tints (`brand-50`) |
+| `gold-50…600` | saffron/brass | Tamil Nadu identity accent — **chrome only** (sidebar mark, seals, "prototype" chips) |
+| `status-compliant/warning/violation/expired` | emerald / amber / red / slate | compliance meaning only, via `<StatusBadge>` / `STATUS_META` |
+| `neutral-ink/surface/subtle/border/line`, `canvas`, `canvas-deep` | cool neutrals | text, card surfaces, hairlines, page background |
+| `shadow-card`, `shadow-card-hover`, `shadow-panel` | indigo-tinted elevation | cards, hover lift, overlays/popovers |
+| `animate-fade-up/fade-in/shimmer/pulse-ring` | motion | entrances, skeletons, live dots |
+
+Custom utilities (declared with `@utility`, so ordinary Tailwind classes still override them):
+`page-canvas` (page background wash), `surface-card` (white card + ring + elevation), `glass-bar`
+(frosted header), `chrome-deep` (navy sidebar/hero), `text-gradient-brand`, `shimmer`,
+`hide-scrollbar`, plus `.scrollbar-light` for dark panels.
+
+Shared chrome components — reach for these before hand-rolling one: `<Card>`/`<CardHeader>`,
+`<StatCard>` (accents: `brand | compliant | warning | violation | expired | gold`), `<StatusBadge>`
+(`soft` for dense UI, `solid` for maps/dark surfaces), `<Table>`, `<Modal>`, `<Skeleton>`,
+`<ComingSoonPage>`, `<BrandMark>`.
+
+**Pages have no title header.** Feature pages start directly at their content (stat row, map, table).
+The page name comes from the topbar breadcrumb, which resolves it from `NAV_ITEMS` — don't reintroduce
+per-page title/description blocks. Section headings inside cards ("Interactive Operations Map") are
+fine. The desktop sidebar collapses to a 4.75rem icon rail via the toggle in its header; the choice
+persists in `localStorage` under `tn-mining:nav-collapsed`.
+
+Greens are `emerald-*` and warm warnings are `amber-*` throughout — don't reintroduce `green-*` or
+`orange-*`, they read as a second, slightly-off palette next to the status colors.
 
 ## Real vs. illustrative data
 
@@ -71,12 +107,14 @@ no API key. If a future feature needs a real secret (e.g. a paid data provider),
    just re-export slices of that one generated result so ids stay linked correctly. If you need more
    mock entities for a new feature, extend `generateAll()` there rather than writing a second generator.
 3. **Status colors vs. brand colors — do not mix these up.** Status colors (`STATUS_META` in
-   `src/types/common.ts`: green/yellow/red/dark-grey for Compliant/Warning/Violation/LicenseExpired) are
-   semantic and must stay consistent across every feature via `<StatusBadge>`. Brand colors
-   (`brand-900`/`brand-700`/`gold-500`/etc., defined in `src/index.css`) are Government-of-Tamil-Nadu
-   chrome only — sidebar, topbar, buttons, active nav — and must never be substituted for a status
-   color or vice versa (the brand maroon and status-violation red are deliberately different reds so
-   they're never visually confused).
+   `src/types/common.ts`: emerald/amber/red/slate for Compliant/Warning/Violation/LicenseExpired, each
+   with a `color` + `soft`/`ink` pill pair) are semantic and must stay consistent across every feature
+   via `<StatusBadge>`. Brand colors (`brand-*`/`gold-*`, defined in `src/index.css`) are
+   Government-of-Tamil-Nadu chrome only — sidebar, topbar, buttons, active nav, map selection — and
+   must never be substituted for a status color or vice versa. The palette is picked so the two can't
+   be confused: brand is indigo/navy, statuses are emerald/amber/red, and the brass `gold-*` accent is
+   deliberately yellower than the orange-leaning `status-warning` amber and appears only on navy
+   chrome. `STATUS_META` mirrors the `--color-status-*` tokens — change both together.
 4. **Shared types first.** `src/types/*.ts` (`Quarry`, `Operator`, `License`, `District`, `MineralType`,
    `QuarryStatus`, etc.) are imported across features. Extend them there rather than redefining shapes
    locally in a feature folder.
@@ -85,7 +123,11 @@ no API key. If a future feature needs a real secret (e.g. a paid data provider),
 6. **Placeholder pages.** Each disabled nav item has a real route rendering `<ComingSoonPage>`
    (`src/components/ui/ComingSoonPage.tsx`) rather than being hidden — this is intentional per the spec,
    not a stub to "finish later" by hiding it.
-7. **Static map data goes in `public/`, referenced by URL — never bundled via a JS import.**
+7. **Every nav item carries a `section`.** `NAV_ITEMS` in `src/app/navConfig.ts` is grouped into
+   `NAV_SECTIONS` (`Overview` / `Enforcement` / `Revenue & Legal`) and the sidebar renders one block per
+   section, so a new feature needs a section assigned or it silently won't appear. The topbar breadcrumb
+   resolves the current item by longest path prefix, so detail routes (`/licensing/:id`) light up their parent.
+8. **Static map data goes in `public/`, referenced by URL — never bundled via a JS import.**
    `QuarryMap.tsx`'s district-boundary `Source` points at `/geo/tn-districts.geojson` as a plain URL
    string; MapLibre fetches it lazily itself. An earlier attempt imported it via Vite's `?raw` + `JSON.parse`
    and inflated the main JS bundle by ~185KB for no benefit — don't repeat that for future static
@@ -117,6 +159,18 @@ scripts/          build-district-geojson.mjs — regenerates public/geo/tn-distr
   `optimizeDeps: { exclude: ['maplibre-gl'] }` — without it, Vite mangles the relative path MapLibre uses
   to spin up its tile-parsing web worker (`new Worker(new URL(...))`), which 404s and silently kills the
   whole map (blank canvas, no tiles, no markers, no console error beyond a 404). Don't remove this exclude.
+- **The district GeoJSON has no `dtname` — the name is in `NAME_2`.** `QuarryMap` looks names up through
+  a single `DISTRICT_NAME_EXPR` coalesce (`dtname → NAME_2 → Dist_Name → district → name`). Earlier code
+  compared `["get","dtname"]` directly, which is always null in the bundled file, so the selected/hovered
+  district silently never highlighted. Use the shared expression for any new district-keyed styling.
+- **Quarry scatter must stay wide enough to separate on screen.** `generateMockData` anchors each quarry
+  on its district's real mining locality and scatters ±0.05° (~5 km). An earlier ±0.001° (~100 m) spread
+  stacked every quarry in a district onto one pixel, so filtering to a district showed a single marker.
+  The district camera uses `fitBounds` over that district's quarries (maxZoom 10.5), not a fixed zoom.
+- **Overlays that must sit above the topbar need a portal.** `<main>` carries `animate-fade-in`, and a
+  CSS animation touching `opacity` creates a stacking context — so a `fixed`, high-`z-index` child of a
+  page (e.g. `QuarrySidePanel`) still paints *below* the sibling topbar. Both the side panel and `Modal`
+  render through `createPortal(document.body)` for this reason.
 
 ## Known constraints (by design, not oversights)
 

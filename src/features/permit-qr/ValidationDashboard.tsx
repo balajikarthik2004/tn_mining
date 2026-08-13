@@ -37,9 +37,9 @@ export function ValidationDashboard({ scans }: Props) {
 
       <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
         <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-          <CheckCircle2 className="w-4 h-4 text-green-500" /> Valid e-Passes
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Valid e-Passes
         </h3>
-        <p className="text-3xl font-black text-green-600">{stats.valid}</p>
+        <p className="text-3xl font-black text-emerald-600">{stats.valid}</p>
         <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Cleared for transport</p>
       </div>
 
@@ -54,9 +54,9 @@ export function ValidationDashboard({ scans }: Props) {
 
       <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
         <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-          <AlertOctagon className="w-4 h-4 text-orange-500" /> Volume Quota Exceeded
+          <AlertOctagon className="w-4 h-4 text-amber-500" /> Volume Quota Exceeded
         </h3>
-        <p className="text-3xl font-black text-orange-600">{stats.quotaExceeded}</p>
+        <p className="text-3xl font-black text-amber-600">{stats.quotaExceeded}</p>
         <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Permits auto-expired</p>
       </div>
     </div>

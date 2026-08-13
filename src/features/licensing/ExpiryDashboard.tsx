@@ -39,7 +39,7 @@ export function ExpiryDashboard({ licenses }: Props) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
         <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-          <CheckCircle2 className="w-4 h-4 text-green-500" /> Active Leases
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Active Leases
         </h3>
         <p className="text-3xl font-black text-brand-900">{stats.active}</p>
         <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Fully compliant quarries</p>
@@ -47,9 +47,9 @@ export function ExpiryDashboard({ licenses }: Props) {
 
       <div className="bg-white border border-neutral-border rounded-xl p-5 shadow-sm">
         <h3 className="text-xs font-bold text-neutral-ink/60 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-          <FileWarning className="w-4 h-4 text-orange-500" /> Pending Renewals
+          <FileWarning className="w-4 h-4 text-amber-500" /> Pending Renewals
         </h3>
-        <p className="text-3xl font-black text-orange-600">{stats.expiring30 + stats.expiring90}</p>
+        <p className="text-3xl font-black text-amber-600">{stats.expiring30 + stats.expiring90}</p>
         <p className="text-xs font-semibold text-neutral-ink/50 mt-1">Expiring within 90 days</p>
       </div>
 
