@@ -10,7 +10,6 @@ import { QuarrySidePanel } from "./components/QuarrySidePanel";
 import { DataSourcesNote } from "./components/DataSourcesNote";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { formatDateTime } from "../../utils/formatters";
-import { DistrictStructureSection } from "./components/DistrictStructureSection";
 
 export function DashboardPage() {
   const { quarries, operatorsById, licensesById, isLoading, lastRefreshedAt } = useDashboardData();
